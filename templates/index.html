@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Límites</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-icon">∫</div>
+            <h1>Calculadora de Límites</h1>
+            <p class="subtitle">Paso a paso &middot; Todas las indeterminaciones</p>
+        </header>
+
+        <section class="card form-card">
+            <h2 class="card-title">Ingresa la expresión</h2>
+            <form method="POST" action="/" class="limit-form" id="limit-form">
+                <div class="form-group">
+                    <label for="expression">Expresión</label>
+                    <input type="text" id="expression" name="expression"
+                           placeholder=""
+                           value="{{ expr }}" required autofocus>
+                    <div class="preview-hint">Puedes escribir con símbolos matemáticos como √(x), x² o π.</div>
+                    <div id="preview" class="preview-box"></div>
+                </div>
+
+                <div class="char-toolbar" id="char-toolbar">
+                    <button type="button" class="char-btn" data-insert="**2" title="Elevado al cuadrado">x²</button>
+                    <button type="button" class="char-btn" data-insert="**3" title="Elevado al cubo">x³</button>
+                    <button type="button" class="char-btn" data-insert="**" title="Potencia">xⁿ</button>
+                    <button type="button" class="char-btn" data-insert="√()" data-cursor="-1" title="Raíz cuadrada">√</button>
+                    <button type="button" class="char-btn" data-insert="/" title="Fracción">/</button>
+                    <button type="button" class="char-btn" data-insert="*" title="Multiplicación">·</button>
+                    <button type="button" class="char-btn" data-wrap="()" title="Paréntesis">( )</button>
+                    <button type="button" class="char-btn" data-wrap="[]" title="Corchetes">[ ]</button>
+                    <button type="button" class="char-btn" data-insert="abs()" data-cursor="-1" title="Valor absoluto">|x|</button>
+                    <button type="button" class="char-btn" data-insert="pi" title="Pi">π</button>
+                    <button type="button" class="char-btn" data-insert="oo" title="Infinito">∞</button>
+                    <button type="button" class="char-btn" data-insert="e" title="Número e">e</button>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="variable">Variable</label>
+                        <input type="text" id="variable" name="variable" value="{{ variable }}" placeholder="x">
+                    </div>
+                    <div class="form-group">
+                        <label for="point">Punto</label>
+                        <div class="point-input-wrap">
+                            <input type="text" id="point" name="point" value="{{ point }}" placeholder="0, oo, pi">
+                            <button type="button" class="point-btn" data-target="point" data-insert="oo" title="Insertar infinito">∞</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="direction">Dirección</label>
+                        <select id="direction" name="direction">
+                            <option value="" {% if direction == '' %}selected{% endif %}>Ambos</option>
+                            <option value="+" {% if direction == '+' %}selected{% endif %}>Derecha (+)</option>
+                            <option value="-" {% if direction == '-' %}selected{% endif %}>Izquierda (-)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit">Calcular límite</button>
+            </form>
+
+            <div class="examples">
+                <h3 class="examples-title">Ejemplos rápidos</h3>
+                <div class="examples-grid">
+                    <button class="example-btn" data-expr="(x^3+1)/(x^2-1)" data-point="-1">lim (x³+1)/(x²-1)<br><small>x→-1</small></button>
+                    <button class="example-btn" data-expr="(x^2-2*x)/(x^2-3*x+2)" data-point="2">lim (x²-2x)/(x²-3x+2)<br><small>x→2</small></button>
+                    <button class="example-btn" data-expr="(sqrt(1+x)-sqrt(1-x))/x" data-point="0">lim (√(1+x)-√(1-x))/x<br><small>x→0</small></button>
+                    <button class="example-btn" data-expr="sqrt(x-3)-sqrt(x+3)" data-point="oo">lim √(x-3)-√(x+3)<br><small>x→∞</small></button>
+                    <button class="example-btn" data-expr="(2*x+3)/(4*x**3+2)" data-point="oo">lim (2x+3)/(4x³+2)<br><small>x→∞</small></button>
+                    <button class="example-btn" data-expr="(1-8*x)^(1/(4*x))" data-point="0">lim (1-8x)^(1/4x)<br><small>x→0</small></button>
+                    <button class="example-btn" data-expr="sin(2*x)/(4*x-4/3*sin(6*x))" data-point="0">lim sen(2x)/(4x-4/3 sen6x)<br><small>x→0</small></button>
+                    <button class="example-btn" data-expr="(e^(x^2)-cos(x))/(x^2)" data-point="0">lim (eˣ²-cos x)/x²<br><small>x→0</small></button>
+                </div>
+            </div>
+        </section>
+
+        {% if result %}
+        <section class="card result-card">
+            <h2 class="card-title result-title">Resultado</h2>
+
+            {% if result.error %}
+                <div class="error-box">
+                    <span class="error-icon">✕</span>
+                    <div>
+                        <strong>Error:</strong> {{ result.error }}
+                    </div>
+                </div>
+            {% else %}
+                <div class="result-meta">
+                    {% if result.limit_type %}
+                    <span class="meta-tag">{{ result.limit_type }}</span>
+                    {% endif %}
+                    {% if result.form %}
+                    <span class="meta-tag tag-warning">{{ result.form }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="result-final">
+                    <div class="katex-block">$$ {{ result.result_tex }} $$</div>
+                </div>
+
+                {% if result.steps %}
+                <div class="steps">
+                    {% for step in result.steps %}
+                    <div class="step step-{{ step.type }}">
+                        <div class="step-header">
+                            <span class="step-num">{{ loop.index }}</span>
+                            <span class="step-title">{{ step.title }}</span>
+                        </div>
+                        {% if step.tex %}
+                        <div class="step-tex">$$ {{ step.tex }} $$</div>
+                        {% endif %}
+                        {% if step.description %}
+                        <div class="step-desc">{{ step.description }}</div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endif %}
+        </section>
+        {% endif %}
+
+        <footer class="footer">
+            <p>Calculadora de Límites &mdash; Resolución paso a paso</p>
+        </footer>
+    </div>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+    <script>
+    function renderMath() {
+        if (window.renderMathInElement) {
+            renderMathInElement(document.body, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '\\(', right: '\\)', display: false}
+                ],
+                throwOnError: false
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        renderMath();
+        var exprInput = document.getElementById('expression');
+        var varInput = document.getElementById('variable');
+        var pointInput = document.getElementById('point');
+        function insertIntoTarget(btn) {
+            var targetId = btn.getAttribute('data-target');
+            var targetInput = targetId === 'point' ? pointInput : exprInput;
+            var start = targetInput.selectionStart;
+            var end = targetInput.selectionEnd;
+            var val = targetInput.value;
+
+            if (btn.hasAttribute('data-wrap')) {
+                var wrap = btn.getAttribute('data-wrap');
+                var left = wrap[0];
+                var right = wrap[1];
+                var selected = val.substring(start, end);
+                targetInput.value = val.substring(0, start) + left + selected + right + val.substring(end);
+                var pos = selected ? start + left.length + selected.length + right.length : start + left.length;
+                targetInput.setSelectionRange(pos, pos);
+            } else {
+                var insert = btn.getAttribute('data-insert');
+                var cursorOffset = btn.hasAttribute('data-cursor') ? parseInt(btn.getAttribute('data-cursor')) : 0;
+                targetInput.value = val.substring(0, start) + insert + val.substring(end);
+                var pos = cursorOffset < 0 ? start + insert.length + cursorOffset : start + insert.length;
+                if (cursorOffset < 0) {
+                    pos = start + insert.length + cursorOffset;
+                    if (pos < start) pos = start;
+                }
+                targetInput.setSelectionRange(pos, pos);
+            }
+
+            targetInput.focus();
+            updatePreview();
+        }
+        var dirSelect = document.getElementById('direction');
+        var preview = document.getElementById('preview');
+        var timer;
+
+        // --- INSERTAR CARACTERES ---
+        document.querySelectorAll('.char-btn, .point-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                insertIntoTarget(this);
+            });
+        });
+
+        // --- PREVIEW ---
+        function updatePreview() {
+            var expr = exprInput.value.trim();
+            var v = varInput.value.trim() || 'x';
+            var p = pointInput.value.trim() || '0';
+            var d = dirSelect.value;
+
+            if (!expr) { preview.innerHTML = ''; return; }
+
+            var fd = new FormData();
+            fd.append('expression', expr);
+            fd.append('variable', v);
+            fd.append('point', p);
+            fd.append('direction', d);
+
+            fetch('/preview_limit', { method: 'POST', body: fd })
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.limit_tex) {
+                        preview.innerHTML = '$$ ' + data.limit_tex + ' $$';
+                        renderMath();
+                    } else {
+                        preview.innerHTML = '';
+                    }
+                })
+                .catch(function() { preview.innerHTML = ''; });
+        }
+
+        exprInput.addEventListener('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 300);
+        });
+        varInput.addEventListener('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 300);
+        });
+        pointInput.addEventListener('input', function() {
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 300);
+        });
+        dirSelect.addEventListener('change', function() {
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 300);
+        });
+
+        // --- RESTAURAR PREVIEW AL RECARGAR ---
+        if (exprInput.value.trim()) {
+            updatePreview();
+        }
+
+        // --- EJEMPLOS ---
+        document.querySelectorAll('.example-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                exprInput.value = this.getAttribute('data-expr');
+                if (this.hasAttribute('data-point')) {
+                    pointInput.value = this.getAttribute('data-point');
+                }
+                if (this.hasAttribute('data-dir')) {
+                    dirSelect.value = this.getAttribute('data-dir');
+                } else {
+                    dirSelect.value = '';
+                }
+                updatePreview();
+                exprInput.focus();
+            });
+        });
+    });
+    </script>
+</body>
+</html>
