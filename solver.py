@@ -96,6 +96,19 @@ def expr_to_latex(expr):
 
         if num_rest:
             return latex(expr)
+    if isinstance(expr, sp.Pow):
+        base_tex = expr_to_latex(expr.args[0])
+        exp = expr.args[1]
+        if exp.is_Mul:
+            exp_clean = sp.together(exp)
+        elif exp.is_Pow and exp.exp == -1:
+            exp_clean = sp.together(exp)
+        else:
+            exp_clean = exp
+        exp_tex = expr_to_latex(exp_clean)
+        if isinstance(expr.args[0], sp.Add):
+            return f'\\left({base_tex}\\right)^{{{exp_tex}}}'
+        return f'{base_tex}^{{{exp_tex}}}'
     return latex(expr)
 
 
@@ -315,11 +328,12 @@ class LimitSolver:
             elif inner.is_Number and inner < 0:
                 inner = -inner
                 neg = True
+            is_const = not inner.has(self.var)
             exp = 1
             if isinstance(inner, sp.Pow):
                 exp = inner.args[1]
                 inner = inner.args[0]
-            return (inner, exp, neg)
+            return (inner, exp, neg, is_const)
 
         t1 = classify(a)
         t2 = classify(b)
@@ -329,11 +343,26 @@ class LimitSolver:
         same = signs[0] == signs[1]
 
         exps = [t1[1], t2[1]]
+        consts = [t1[3], t2[3]]
 
-        if opp and (2 in exps or exps[0] == exps[1] == 2):
-            return 'diferencia de cuadrados'
+        # Difference of squares
+        if opp:
+            if 2 in exps or (exps[0] == exps[1] == 2):
+                return 'diferencia de cuadrados'
+            # Check x^even - perfect_square (e.g. x^4 - 16)
+            if consts[0] != consts[1]:
+                var_exp = exps[0] if not consts[0] else exps[1]
+                const_val = t1[0] if consts[0] else t2[0]
+                if var_exp % 2 == 0 and const_val.is_Integer:
+                    root = int(const_val ** 0.5)
+                    if root * root == const_val:
+                        return 'diferencia de cuadrados'
+
+        # Difference of cubes
         if opp and (3 in exps):
             return 'diferencia de cubos'
+
+        # Sum of cubes
         if same and (3 in exps):
             return 'suma de cubos'
 
@@ -342,6 +371,7 @@ class LimitSolver:
     def _classify_expr(self, expr):
         has_trig = False
         has_log = False
+        has_e = False
         has_exp = False
         has_radical = False
 
@@ -350,6 +380,8 @@ class LimitSolver:
                 has_radical = True
             if isinstance(sub, sp.Pow) and sub.args[1].has(self.var):
                 has_exp = True
+            if sub == sp.E:
+                has_e = True
             fn = getattr(sub, 'func', None)
             if fn:
                 if fn in (sp.sin, sp.cos, sp.tan, sp.cot, sp.sec, sp.csc):
@@ -357,12 +389,14 @@ class LimitSolver:
                 if fn in (sp.log, sp.ln):
                     has_log = True
                 if fn == sp.exp:
-                    has_exp = True
+                    has_e = True
 
-        if has_trig:
-            return 'trigonométrico'
+        if has_e:
+            return 'logarítmico'
         if has_log:
             return 'logarítmico'
+        if has_trig:
+            return 'trigonométrico'
         if has_exp:
             return 'exponencial'
         if has_radical:
@@ -646,13 +680,95 @@ class LimitSolver:
             return None
         return (new_expr, val, {'target': target, 'conj': conj, 'is_num': is_num})
 
+    def _solve_trigonometric_0_over_0(self, expr=None):
+        if expr is None:
+            expr = self.expr
+        self.steps = []
+        x, point = self.var, self.point
+
+        self._add_step(
+            'Paso 1',
+            self._paso1_indet_tex(expr, '0/0'),
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
+            'warning'
+        )
+
+        special_limits = (
+            '\\lim_{u \\to 0} \\frac{\\sin u}{u} = 1 \\\\'
+            '\\lim_{u \\to 0} \\frac{u}{\\sin u} = 1 \\\\'
+            '\\lim_{u \\to 0} \\frac{1 - \\cos u}{u} = 0'
+        )
+        self._add_step(
+            'Paso 2',
+            f'\\text{{Aplicamos límites trigonométricos especiales:}} \\\\{special_limits}',
+            'Se utilizan límites trigonométricos fundamentales.',
+            'info'
+        )
+
+        # Use silent solving to avoid showing L'Hôpital steps
+        val = self._solve_silent(expr)
+        if val is not None and not self._is_indeterminate(val):
+            result_tex = self._latex(val)
+            paso3_tex = f'\\boxed{{{self._limit_tex(expr)} = {result_tex}}}'
+            self._add_step(
+                'Paso 3',
+                paso3_tex,
+                'Se halla el límite.',
+                'info'
+            )
+            return val
+
+        return self._solve_fallback(expr)
+
+    def _solve_logarithmic_0_over_0(self, expr=None):
+        if expr is None:
+            expr = self.expr
+        self.steps = []
+        x, point = self.var, self.point
+
+        self._add_step(
+            'Paso 1',
+            self._paso1_indet_tex(expr, '0/0'),
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
+            'warning'
+        )
+
+        log_limit_tex = '\\lim_{u \\to 0} \\frac{e^{u} - 1}{u} = 1'
+        self._add_step(
+            'Paso 2',
+            f'\\text{{Aplicamos el límite especial: }} {log_limit_tex}',
+            'Se utiliza el límite logarítmico fundamental.',
+            'info'
+        )
+
+        # Use silent solving (no sub-steps visible)
+        sympy_limit = self._solve_silent(expr)
+        if sympy_limit is not None and not self._is_indeterminate(sympy_limit):
+            result_tex = self._latex(sympy_limit)
+            paso3_tex = f'\\boxed{{{self._limit_tex(expr)} = {result_tex}}}'
+            self._add_step(
+                'Paso 3',
+                paso3_tex,
+                'Se halla el límite.',
+                'info'
+            )
+            return sympy_limit
+
+        return self._solve_fallback(expr)
+
     def _solve_0_over_0_detailed(self, expr=None):
         if expr is None:
             expr = self.expr
         self.steps = []
         x, point = self.var, self.point
-        limit_tex_full = self._limit_tex(expr)
 
+        # Route to specific solvers based on limit type
+        if self._limit_type == 'trigonométrico':
+            return self._solve_trigonometric_0_over_0(expr)
+        if self._limit_type == 'logarítmico':
+            return self._solve_logarithmic_0_over_0(expr)
+
+        # Default: rational / irrational path
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, '0/0'),
@@ -1201,21 +1317,52 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresión simplificada para 
             return self._solve_fallback(expr)
 
         base, exponent = expr.args
-        ln_expr = sp.simplify(exponent * log(base))
+        f_tex = self._latex(base)
+        g_tex = self._latex(exponent)
 
+        f_minus_1 = sp.simplify(base - 1)
+        new_power = sp.simplify(f_minus_1 * exponent)
+        new_power_tex = self._latex(new_power)
+
+        paso2_tex = (
+            f'\\text{{Aplicamos la igualdad: }} '
+            f'\\lim \\left({f_tex}\\right)^{{{g_tex}}} = e^{{\\lim ({f_tex}-1) \\cdot {g_tex}}} \\\\'
+            f'({f_tex}-1) \\cdot {g_tex} = ({self._latex(f_minus_1)}) \\cdot {g_tex} = {new_power_tex}'
+        )
         self._add_step(
             'Paso 2',
-            f'\\text{{Sea }} L = {orig_tex} \\\\ \\ln L = {self._latex(exponent)} \\cdot \\ln\\left({self._latex(base)}\\right) = {self._latex(ln_expr)}',
-            'Se aplica logaritmo natural para transformar la exponencial.',
+            paso2_tex,
+            'Se aplica la igualdad fundamental de límites exponenciales.',
             'info'
         )
 
+        val = self._safe_sub(new_power)
+        if not self._is_indeterminate(val):
+            result = sp.exp(val)
+            paso3_tex = (
+                f'\\lim \\left({f_tex}\\right)^{{{g_tex}}} = e^{{{new_power_tex}}} = {self._latex(result)} \\\\'
+                f'\\boxed{{{self._limit_tex(expr)} = {self._latex(result)}}}'
+            )
+            self._add_step(
+                'Paso 3',
+                paso3_tex,
+                'Se halla el límite.',
+                'info'
+            )
+            return result
+
+        ln_expr = sp.simplify(exponent * log(base))
+        self._add_step(
+            'Paso 2 (alt)',
+            f'\\text{{Sea }} L = {orig_tex} \\\\ \\ln L = {g_tex} \\cdot \\ln\\left({f_tex}\\right) = {self._latex(ln_expr)}',
+            'Se aplica logaritmo natural para transformar la exponencial.',
+            'info'
+        )
         ln_val = self._safe_sub(ln_expr)
         if not self._is_indeterminate(ln_val):
             result_ln = ln_val
         else:
             result_ln = self._solve_silent(ln_expr)
-
         if result_ln is not None and not self._is_indeterminate(result_ln):
             L = exp(result_ln)
             self._add_step(

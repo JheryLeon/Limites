@@ -70,8 +70,8 @@
                     <button class="example-btn" data-expr="(sqrt(1+x)-sqrt(1-x))/x" data-point="0">lim (√(1+x)-√(1-x))/x<br><small>x→0</small></button>
                     <button class="example-btn" data-expr="sqrt(x-3)-sqrt(x+3)" data-point="oo">lim √(x-3)-√(x+3)<br><small>x→∞</small></button>
                     <button class="example-btn" data-expr="(2*x+3)/(4*x**3+2)" data-point="oo">lim (2x+3)/(4x³+2)<br><small>x→∞</small></button>
-                    <button class="example-btn" data-expr="(1-8*x)^(1/(4*x))" data-point="0">lim (1-8x)^(1/4x)<br><small>x→0</small></button>
                     <button class="example-btn" data-expr="sin(2*x)/(4*x-4/3*sin(6*x))" data-point="0">lim sen(2x)/(4x-4/3 sen6x)<br><small>x→0</small></button>
+                    <button class="example-btn" data-expr="(1-8*x)^(1/(4*x))" data-point="0">lim (1-8x)^(1/4x)<br><small>x→0</small></button>
                     <button class="example-btn" data-expr="(e^(x^2)-cos(x))/(x^2)" data-point="0">lim (eˣ²-cos x)/x²<br><small>x→0</small></button>
                 </div>
             </div>
@@ -91,10 +91,10 @@
             {% else %}
                 <div class="result-meta">
                     {% if result.limit_type %}
-                    <span class="meta-tag">{{ result.limit_type }}</span>
+                    <span class="meta-tag">límite {{ result.limit_type }}</span>
                     {% endif %}
                     {% if result.form %}
-                    <span class="meta-tag tag-warning">{{ result.form }}</span>
+                    <span class="meta-tag tag-warning">indeterminación {{ result.form }}</span>
                     {% endif %}
                 </div>
 
