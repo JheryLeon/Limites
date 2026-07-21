@@ -54,13 +54,11 @@ def index():
     expr_input = ''
     variable = 'x'
     point = '0'
-    direction = ''
 
     if request.method == 'POST':
         expr_input = request.form.get('expression', '').strip()
         variable = request.form.get('variable', 'x').strip() or 'x'
         point = request.form.get('point', '0').strip() or '0'
-        direction = request.form.get('direction', '').strip()
 
         if not expr_input:
             result = {
@@ -75,7 +73,6 @@ def index():
                     expr_input,
                     var_str=variable,
                     point_str=point,
-                    direction=direction if direction else None,
                 )
                 result = solver.solve()
             except Exception as e:
@@ -92,7 +89,6 @@ def index():
         expr=expr_input,
         variable=variable,
         point=point,
-        direction=direction,
     )
 
 
@@ -101,7 +97,6 @@ def preview_limit():
     expr_str = request.form.get('expression', '').strip()
     var_str = request.form.get('variable', 'x').strip() or 'x'
     point_str = request.form.get('point', '0').strip() or '0'
-    direction = request.form.get('direction', '').strip()
 
     if not expr_str:
         return jsonify({'limit_tex': None, 'error': 'Expresión vacía'})
@@ -113,8 +108,7 @@ def preview_limit():
         expr = sp.sympify(expr_sympy, locals=local_dict, evaluate=False)
         expr_tex = expr_to_latex(expr)
         pt_tex = _point_to_tex(point_str)
-        dir_tex = '^{+}' if direction == '+' else '^{-}' if direction == '-' else ''
-        limit_tex = f'\\lim_{{{var_str} \\to {pt_tex}{dir_tex}}} {expr_tex}'
+        limit_tex = f'\\lim_{{{var_str} \\to {pt_tex}}} {expr_tex}'
         return jsonify({'limit_tex': limit_tex, 'error': None})
     except Exception as e:
         return jsonify({'limit_tex': None, 'error': str(e)})

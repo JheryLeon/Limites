@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Límites</title>
+    <title>Límites</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -14,8 +14,8 @@
     <div class="container">
         <header class="header">
             <div class="header-icon">∫</div>
-            <h1>Calculadora de Límites</h1>
-            <p class="subtitle">Paso a paso &middot; Todas las indeterminaciones</p>
+            <h1>Proyecto Formativo Limites</h1>
+            <p class="subtitle"> &middot; Todas las indeterminaciones</p>
         </header>
 
         <section class="card form-card">
@@ -26,7 +26,7 @@
                     <input type="text" id="expression" name="expression"
                            placeholder=""
                            value="{{ expr }}" required autofocus>
-                    <div class="preview-hint">Puedes escribir con símbolos matemáticos como √(x), x² o π.</div>
+                    <div class="preview-hint">Vista Previa del Ejercicio</div>
                     <div id="preview" class="preview-box"></div>
                 </div>
 
@@ -47,27 +47,19 @@
 
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="variable">Variable</label>
+                        <label for="variable">Tendencia</label>
                         <input type="text" id="variable" name="variable" value="{{ variable }}" placeholder="x">
                     </div>
                     <div class="form-group">
-                        <label for="point">Punto</label>
+                        <label for="point">Valor</label>
                         <div class="point-input-wrap">
                             <input type="text" id="point" name="point" value="{{ point }}" placeholder="0, oo, pi">
                             <button type="button" class="point-btn" data-target="point" data-insert="oo" title="Insertar infinito">∞</button>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="direction">Dirección</label>
-                        <select id="direction" name="direction">
-                            <option value="" {% if direction == '' %}selected{% endif %}>Ambos</option>
-                            <option value="+" {% if direction == '+' %}selected{% endif %}>Derecha (+)</option>
-                            <option value="-" {% if direction == '-' %}selected{% endif %}>Izquierda (-)</option>
-                        </select>
-                    </div>
                 </div>
 
-                <button type="submit" class="btn-submit">Calcular límite</button>
+                <button type="submit" class="btn-submit">Calcular el límite</button>
             </form>
 
             <div class="examples">
@@ -133,7 +125,7 @@
         {% endif %}
 
         <footer class="footer">
-            <p>Calculadora de Límites &mdash; Resolución paso a paso</p>
+            <p>Calculo I &mdash; Universidad Privada Domingo Savio</p>
         </footer>
     </div>
 
@@ -187,7 +179,6 @@
             targetInput.focus();
             updatePreview();
         }
-        var dirSelect = document.getElementById('direction');
         var preview = document.getElementById('preview');
         var timer;
 
@@ -203,7 +194,6 @@
             var expr = exprInput.value.trim();
             var v = varInput.value.trim() || 'x';
             var p = pointInput.value.trim() || '0';
-            var d = dirSelect.value;
 
             if (!expr) { preview.innerHTML = ''; return; }
 
@@ -211,7 +201,6 @@
             fd.append('expression', expr);
             fd.append('variable', v);
             fd.append('point', p);
-            fd.append('direction', d);
 
             fetch('/preview_limit', { method: 'POST', body: fd })
                 .then(function(r) { return r.json(); })
@@ -238,10 +227,6 @@
             clearTimeout(timer);
             timer = setTimeout(updatePreview, 300);
         });
-        dirSelect.addEventListener('change', function() {
-            clearTimeout(timer);
-            timer = setTimeout(updatePreview, 300);
-        });
 
         // --- RESTAURAR PREVIEW AL RECARGAR ---
         if (exprInput.value.trim()) {
@@ -254,11 +239,6 @@
                 exprInput.value = this.getAttribute('data-expr');
                 if (this.hasAttribute('data-point')) {
                     pointInput.value = this.getAttribute('data-point');
-                }
-                if (this.hasAttribute('data-dir')) {
-                    dirSelect.value = this.getAttribute('data-dir');
-                } else {
-                    dirSelect.value = '';
                 }
                 updatePreview();
                 exprInput.focus();

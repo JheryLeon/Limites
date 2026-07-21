@@ -83,12 +83,12 @@ def expr_to_latex(expr):
                 num_rest.append(arg)
 
         if den_rest:
-            num = sp.Mul(coeff, *num_rest) if coeff != 1 or num_rest else sp.One
-            den = sp.Mul(den_coeff, *den_rest) if den_coeff != 1 or den_rest else sp.One
+            num = sp.Mul(coeff, *num_rest) if coeff != 1 or num_rest else sp.Integer(1)
+            den = sp.Mul(den_coeff, *den_rest) if den_coeff != 1 or den_rest else sp.Integer(1)
             return f'\\frac{{{expr_to_latex(num)}}}{{{expr_to_latex(den)}}}'
 
         if den_coeff != 1:
-            rest = sp.Mul(*num_rest) if num_rest else sp.One
+            rest = sp.Mul(*num_rest) if num_rest else sp.Integer(1)
             frac = f'\\frac{{{coeff}}}{{{den_coeff}}}'
             if rest != 1:
                 return f'{frac} \\, {expr_to_latex(rest)}'
@@ -348,6 +348,8 @@ class LimitSolver:
         for sub in sp.preorder_traversal(expr):
             if isinstance(sub, sp.Pow) and isinstance(sub.args[1], sp.Rational) and sub.args[1].q == 2:
                 has_radical = True
+            if isinstance(sub, sp.Pow) and sub.args[1].has(self.var):
+                has_exp = True
             fn = getattr(sub, 'func', None)
             if fn:
                 if fn in (sp.sin, sp.cos, sp.tan, sp.cot, sp.sec, sp.csc):
