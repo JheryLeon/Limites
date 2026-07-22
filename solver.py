@@ -157,7 +157,7 @@ class LimitSolver:
                 'sqrt': sp.sqrt,
                 'exp': sp.exp,
             }
-            expr = sympify(s, locals=local_dict, evaluate=False)
+            expr = sympify(s, locals=local_dict)
             return expr
         except Exception as e:
             raise ValueError(f"Error al parsear la expresión: {e}")
@@ -262,7 +262,6 @@ class LimitSolver:
         if point is None:
             point = self.point
         try:
-            expr = sp.together(expr)
             val = expr.subs(self.var, point)
             val = nsimplify(val)
             reduced = sp.together(val)
