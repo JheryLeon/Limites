@@ -4,46 +4,241 @@ Aplicación web para resolver límites paso a paso, cubriendo todas las formas i
 
 ---
 
-## 1. Requisitos
+## 1. Instalar Python (si no lo tienes)
 
-- **Python 3.8 o superior** instalado
-- **pip** (gestor de paquetes de Python, incluido con Python)
-- **Git** (opcional, para clonar el repositorio)
-- Conexión a internet (solo para la primera instalación)
+Si tu computadora ya tiene Python instalado, salta al paso 2.
+
+### Windows
+
+1. Ve a Python https://www.python.org/ftp/python/3.14.6/python-3.14.6-amd64.exe
+2. Una vez descargado, **abre el archivo** `python-3.x.x-amd64.exe`
+3. **IMPORTANTE**: En la primera pantalla, **marca la casilla** que dice:
+   > ✅ **Add Python to PATH**
+4. Luego haz clic en **Install Now**
+5. Espera a que termine la instalación (1-2 minutos)
+6. Al finalizar, haz clic en **Close**
+
+### macOS
+
+1. Abre la terminal (busca "Terminal" en Spotlight)
+2. Escribe el siguiente comando y presiona Enter:
+   ```bash
+   xcode-select --install
+   ```
+3. Sigue las instrucciones en pantalla para instalar las herramientas de desarrollo
+4. Luego instala Python desde https://www.python.org/downloads/ — descarga el instalador para macOS y ábrelo
+
+### Linux (Ubuntu/Debian)
+
+Abre la terminal y ejecuta:
+
+```bash
+sudo apt update
+sudo apt install python3 python3-pip python3-venv
+```
 
 ---
 
-## 2. Instalación
+## 2. Verificar que Python se instaló correctamente
 
-### Opción A: Descargar desde GitHub
+### Windows
 
-1. Abre una terminal (PowerShell en Windows, Terminal en macOS/Linux)
+1. Presiona `Windows + R`, escribe `powershell` y presiona Enter
+2. Escribe los siguientes comandos, uno por uno:
 
-2. Clona el repositorio:
-   ```bash
-   git clone https://github.com/JheryLeon/Limites.git
-   ```
+```powershell
+python --version
+```
 
-3. Entra a la carpeta:
-   ```bash
-   cd Limites
-   ```
+Deberías ver algo como: `Python 3.12.0`
 
-4. Instala las dependencias:
-   ```bash
-   pip install -r requirements.txt
-   ```
+```powershell
+pip --version
+```
 
-### Opción B: Copiar la carpeta manualmente
+Deberías ver algo como: `pip 24.0 from ...`
 
-Si te pasaron la carpeta del proyecto comprimida:
+> **Si el primer comando da error**, prueba con:
+> ```powershell
+> python3 --version
+> py --version
+> ```
 
-1. Descomprime el archivo en una ubicación de tu preferencia
-2. Abre una terminal en esa carpeta
-3. Ejecuta:
-   ```bash
-   pip install flask sympy gunicorn
-   ```
+### macOS / Linux
+
+En la terminal:
+
+```bash
+python3 --version
+pip3 --version
+```
+
+---
+
+## 3. Descargar el proyecto
+
+Tienes dos opciones:
+
+### Opción A: Descargar ZIP (recomendado para principiantes)
+
+1. Abre tu navegador y ve a: https://github.com/JheryLeon/Limites
+2. Haz clic en el botón verde **Code** (arriba a la derecha)
+3. Selecciona **Download ZIP**
+4. Una vez descargado, haz clic derecho sobre el archivo ZIP → **Extraer todo** (Windows) o haz doble clic para descomprimirlo (macOS)
+5. Se creará una carpeta llamada `Limites` o `Limites-main`
+
+### Opción B: Clonar con Git (si ya tienes Git instalado)
+
+Abre la terminal y escribe:
+
+```bash
+git clone https://github.com/JheryLeon/Limites.git
+cd Limites
+```
+
+---
+
+## 4. Abrir la terminal en la carpeta del proyecto
+
+### Windows
+
+1. Abre la carpeta `Limites` que acabas de descomprimir
+2. Haz clic en la **barra de direcciones** del explorador de archivos (la barra blanca de arriba donde dice la ruta)
+3. Escribe `powershell` y presiona Enter
+4. Se abrirá una ventana azul de PowerShell **ya dentro de la carpeta correcta**
+
+### macOS / Linux
+
+En la terminal, navega hasta la carpeta:
+
+```bash
+cd ~/Descargas/Limites   # ajusta la ruta según donde descargaste
+```
+
+O simplemente escribe `cd` y arrastra la carpeta a la terminal, luego presiona Enter.
+
+---
+
+## 5. Instalar las dependencias
+
+Estando en la terminal **dentro de la carpeta del proyecto**, escribe:
+
+### Windows (PowerShell)
+
+```powershell
+pip install -r requirements.txt
+```
+
+### macOS / Linux
+
+```bash
+pip3 install -r requirements.txt
+```
+
+Este comando instalará Flask (el servidor web), SymPy (cálculo simbólico) y Gunicorn.
+
+> **Si aparece un error** de permisos, prueba:
+> ```bash
+> pip install --user -r requirements.txt
+> ```
+>
+> **Si en Windows aparece un error** sobre `execution policy`, ejecuta primero:
+> ```powershell
+> Set-ExecutionPolicy Unrestricted -Scope CurrentUser
+> ```
+
+La instalación puede tardar **2-5 minutos** porque SymPy es una librería grande (~40 MB). Espera a que termine. Verás algo como:
+
+```
+Successfully installed flask-3.x.x sympy-1.x.x gunicorn-20.x.x
+```
+
+---
+
+## 6. Ejecutar la aplicación
+
+### Windows (PowerShell)
+
+En la misma terminal, escribe:
+
+```powershell
+python app.py
+```
+
+### macOS / Linux
+
+```bash
+python3 app.py
+```
+
+Si todo funciona bien, verás un mensaje como:
+
+```
+ * Serving Flask app 'app'
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.x.x:5000
+```
+
+---
+
+## 7. Abrir la calculadora en el navegador
+
+1. Abre **Google Chrome, Microsoft Edge, Firefox o Safari**
+2. En la barra de direcciones (arriba), escribe: **http://127.0.0.1:5000**
+3. Presiona Enter
+
+¡Ya deberías ver la Calculadora de Límites funcionando!
+
+> La aplicación solo funciona mientras la terminal esté abierta. Para cerrarla, presiona `Ctrl + C` en la terminal.
+
+---
+
+## 8. Solución de problemas comunes
+
+### "python no se reconoce como un comando"
+
+**Causa**: Python no está agregado al PATH (ruta del sistema).
+
+**Solución**: Desinstala Python y vuelve a instalarlo. En la primera pantalla del instalador, **asegúrate de marcar "Add Python to PATH"**.
+
+### "pip no se reconoce como un comando"
+
+**Solución**:
+
+- Windows: Prueba con `python -m pip install -r requirements.txt`
+- macOS/Linux: Prueba con `pip3` en lugar de `pip`
+
+### Error "No module named flask"
+
+**Causa**: No se instalaron las dependencias (o se instalaron en el lugar equivocado).
+
+**Solución**: Asegúrate de estar en la carpeta del proyecto y ejecuta de nuevo:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Error "Address already in use"
+
+**Causa**: El puerto 5000 ya está ocupado por otro programa.
+
+**Solución**: Cierra otros programas o cambia el puerto:
+
+```bash
+python app.py --port=5001
+```
+
+Luego abre el navegador en `http://127.0.0.1:5001`
+
+### El mensaje "Running on ..." no aparece
+
+**Causa**: El programa se ejecutó pero no se ve el mensaje.
+
+**Solución**: Revisa si hay errores en la terminal. Si ves mensajes en rojo, comparte esos mensajes con tu profesor.
+
+### Si todo lo demás falla
+
+Prueba desinstalar Python completamente y volver a instalarlo desde cero, siguiendo el paso 1 al pie de la letra.
 
 ---
 

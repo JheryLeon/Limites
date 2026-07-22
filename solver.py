@@ -262,6 +262,7 @@ class LimitSolver:
         if point is None:
             point = self.point
         try:
+            expr = sp.together(expr)
             val = expr.subs(self.var, point)
             val = nsimplify(val)
             reduced = sp.together(val)
