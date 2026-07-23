@@ -157,7 +157,7 @@ class LimitSolver:
                 'sqrt': sp.sqrt,
                 'exp': sp.exp,
             }
-            expr = sympify(s, locals=local_dict)
+            expr = sympify(s, locals=local_dict, evaluate=False)
             return expr
         except Exception as e:
             raise ValueError(f"Error al parsear la expresión: {e}")
@@ -262,7 +262,9 @@ class LimitSolver:
         if point is None:
             point = self.point
         try:
-            val = expr.subs(self.var, point)
+            expr_str = str(expr)
+            clean = sympify(expr_str, locals={self.var.name: self.var})
+            val = clean.subs(self.var, point)
             val = nsimplify(val)
             reduced = sp.together(val)
             if reduced in (nan, zoo, oo, -oo):
@@ -461,8 +463,7 @@ class LimitSolver:
                 if (has_plus and has_minus) or (has_q and (has_plus or has_minus)) or (signs.count('?') >= 2):
                     return '∞-∞'
 
-        frac = together(expr)
-        num, den = fraction(frac)
+        num, den = expr.as_numer_denom()
         num_val = self._safe_sub(num)
         den_val = self._safe_sub(den)
         num_zero = self._is_zero(num_val)
@@ -776,8 +777,7 @@ class LimitSolver:
             'warning'
         )
 
-        frac = together(expr)
-        num, den = fraction(frac)
+        num, den = expr.as_numer_denom()
         is_irracional = self._limit_type == 'algebraico irracional'
 
         simplified = None
