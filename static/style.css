@@ -415,6 +415,12 @@ code {
     display: none;
 }
 
+.preview-error {
+    color: #dc2626;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
 /* Examples */
 .examples {
     margin-top: 1.5rem;
@@ -472,6 +478,34 @@ code {
 
 .example-btn:hover small {
     color: #6366f1;
+}
+
+/* MathQuill editor */
+.mq-editor {
+    min-height: 3.2rem;
+    padding: 0.65rem 0.85rem;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+    font-size: 1.1rem;
+    cursor: text;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.mq-editor:hover {
+    border-color: #a5b4fc;
+}
+
+.mq-editor:focus-within,
+.mq-editor.mq-focused {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+    background: #ffffff;
+}
+
+.mq-editor .mq-root-block {
+    padding: 0;
 }
 
 /* Katex fixes */

@@ -52,6 +52,7 @@ def _normalize_expression(expr_str):
 def index():
     result = None
     expr_input = ''
+    expr_latex = ''
     variable = 'x'
     point = '0'
 
@@ -75,6 +76,10 @@ def index():
                     point_str=point,
                 )
                 result = solver.solve()
+                if '\\' in expr_input:
+                    expr_latex = expr_input
+                else:
+                    expr_latex = sp.latex(solver.expr)
             except Exception as e:
                 result = {
                     'steps': [],
@@ -87,6 +92,7 @@ def index():
         'index.html',
         result=result,
         expr=expr_input,
+        expr_latex=expr_latex,
         variable=variable,
         point=point,
     )
@@ -101,15 +107,22 @@ def preview_limit():
     if not expr_str:
         return jsonify({'limit_tex': None, 'error': 'Expresión vacía'})
 
-    expr_sympy = _normalize_expression(expr_str).replace('^', '**')
     try:
-        local_dict = _get_local_dict(var_str).copy()
-        local_dict['e'] = sp.E
-        expr = sp.sympify(expr_sympy, locals=local_dict, evaluate=False)
-        expr_tex = expr_to_latex(expr)
-        pt_tex = _point_to_tex(point_str)
-        limit_tex = f'\\lim_{{{var_str} \\to {pt_tex}}} {expr_tex}'
-        return jsonify({'limit_tex': limit_tex, 'error': None})
+        if '\\' in expr_str:
+            from sympy.parsing.latex import parse_latex
+            parse_latex(expr_str)
+            pt_tex = _point_to_tex(point_str)
+            limit_tex = f'\\lim_{{{var_str} \\to {pt_tex}}} {expr_str}'
+            return jsonify({'limit_tex': limit_tex, 'error': None})
+        else:
+            expr_sympy = _normalize_expression(expr_str).replace('^', '**')
+            local_dict = _get_local_dict(var_str).copy()
+            local_dict['e'] = sp.E
+            expr = sp.sympify(expr_sympy, locals=local_dict, evaluate=False)
+            expr_tex = expr_to_latex(expr)
+            pt_tex = _point_to_tex(point_str)
+            limit_tex = f'\\lim_{{{var_str} \\to {pt_tex}}} {expr_tex}'
+            return jsonify({'limit_tex': limit_tex, 'error': None})
     except Exception as e:
         return jsonify({'limit_tex': None, 'error': str(e)})
 
@@ -117,4 +130,4 @@ def preview_limit():
 if __name__ == '__main__':
     import os
     port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)

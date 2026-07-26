@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -22,27 +23,26 @@
             <h2 class="card-title">Ingresa la expresión</h2>
             <form method="POST" action="/" class="limit-form" id="limit-form">
                 <div class="form-group">
-                    <label for="expression">Expresión</label>
-                    <input type="text" id="expression" name="expression"
-                           placeholder=""
-                           value="{{ expr }}" required autofocus>
+                    <label>Expresión</label>
+                    <div id="mq-editor" class="mq-editor"></div>
+                    <input type="hidden" id="expression" name="expression" value="{{ expr }}">
                     <div class="preview-hint">Vista Previa del Ejercicio</div>
                     <div id="preview" class="preview-box"></div>
                 </div>
 
                 <div class="char-toolbar" id="char-toolbar">
-                    <button type="button" class="char-btn" data-insert="**2" title="Elevado al cuadrado">x²</button>
-                    <button type="button" class="char-btn" data-insert="**3" title="Elevado al cubo">x³</button>
-                    <button type="button" class="char-btn" data-insert="**" title="Potencia">xⁿ</button>
-                    <button type="button" class="char-btn" data-insert="√()" data-cursor="-1" title="Raíz cuadrada">√</button>
-                    <button type="button" class="char-btn" data-insert="/" title="Fracción">/</button>
-                    <button type="button" class="char-btn" data-insert="*" title="Multiplicación">·</button>
-                    <button type="button" class="char-btn" data-wrap="()" title="Paréntesis">( )</button>
-                    <button type="button" class="char-btn" data-wrap="[]" title="Corchetes">[ ]</button>
-                    <button type="button" class="char-btn" data-insert="abs()" data-cursor="-1" title="Valor absoluto">|x|</button>
-                    <button type="button" class="char-btn" data-insert="pi" title="Pi">π</button>
-                    <button type="button" class="char-btn" data-insert="oo" title="Infinito">∞</button>
-                    <button type="button" class="char-btn" data-insert="e" title="Número e">e</button>
+                    <button type="button" class="char-btn" data-mq-cmd="^" title="Potencia">x<sup>n</sup></button>
+                    <button type="button" class="char-btn" data-mq-cmd="\frac" title="Fracción">a/b</button>
+                    <button type="button" class="char-btn" data-mq-cmd="\sqrt" title="Raíz cuadrada">√</button>
+                    <button type="button" class="char-btn" id="cube-root-btn" title="Raíz cúbica">∛</button>
+                    <button type="button" class="char-btn" data-mq-write="\sin" title="Seno">sen</button>
+                    <button type="button" class="char-btn" data-mq-write="\cos" title="Coseno">cos</button>
+                    <button type="button" class="char-btn" data-mq-write="\tan" title="Tangente">tan</button>
+                    <button type="button" class="char-btn" data-mq-write="\ln" title="Logaritmo natural">ln</button>
+                    <button type="button" class="char-btn" data-mq-text="()" title="Paréntesis">( )</button>
+                    <button type="button" class="char-btn" data-mq-write="\pi" title="Pi">π</button>
+                    <button type="button" class="char-btn" data-mq-write="\infty" title="Infinito">∞</button>
+                    <button type="button" class="char-btn" data-mq-text="e" title="Número e">e</button>
                 </div>
 
                 <div class="form-row">
@@ -54,7 +54,7 @@
                         <label for="point">Valor</label>
                         <div class="point-input-wrap">
                             <input type="text" id="point" name="point" value="{{ point }}" placeholder="0, oo, pi">
-                            <button type="button" class="point-btn" data-target="point" data-insert="oo" title="Insertar infinito">∞</button>
+                            <button type="button" class="point-btn" id="point-inf-btn" title="Insertar infinito">∞</button>
                         </div>
                     </div>
                 </div>
@@ -65,14 +65,14 @@
             <div class="examples">
                 <h3 class="examples-title">Ejemplos rápidos</h3>
                 <div class="examples-grid">
-                    <button class="example-btn" data-expr="(x^3+1)/(x^2-1)" data-point="-1">lim (x³+1)/(x²-1)<br><small>x→-1</small></button>
-                    <button class="example-btn" data-expr="(x^2-2*x)/(x^2-3*x+2)" data-point="2">lim (x²-2x)/(x²-3x+2)<br><small>x→2</small></button>
-                    <button class="example-btn" data-expr="(sqrt(1+x)-sqrt(1-x))/x" data-point="0">lim (√(1+x)-√(1-x))/x<br><small>x→0</small></button>
-                    <button class="example-btn" data-expr="sqrt(x-3)-sqrt(x+3)" data-point="oo">lim √(x-3)-√(x+3)<br><small>x→∞</small></button>
-                    <button class="example-btn" data-expr="(2*x+3)/(4*x**3+2)" data-point="oo">lim (2x+3)/(4x³+2)<br><small>x→∞</small></button>
-                    <button class="example-btn" data-expr="sin(2*x)/(4*x-4/3*sin(6*x))" data-point="0">lim sen(2x)/(4x-4/3 sen6x)<br><small>x→0</small></button>
-                    <button class="example-btn" data-expr="(1-8*x)^(1/(4*x))" data-point="0">lim (1-8x)^(1/4x)<br><small>x→0</small></button>
-                    <button class="example-btn" data-expr="(e^(x^2)-cos(x))/(x^2)" data-point="0">lim (eˣ²-cos x)/x²<br><small>x→0</small></button>
+                    <button class="example-btn" data-latex="\frac{x^{3}+1}{x^{2}-1}" data-point="-1">lim (x³+1)/(x²-1)<br><small>x→-1</small></button>
+                    <button class="example-btn" data-latex="\frac{x^{2}-2x}{x^{2}-3x+2}" data-point="2">lim (x²-2x)/(x²-3x+2)<br><small>x→2</small></button>
+                    <button class="example-btn" data-latex="\frac{\sqrt{1+x}-\sqrt{1-x}}{x}" data-point="0">lim (√(1+x)-√(1-x))/x<br><small>x→0</small></button>
+                    <button class="example-btn" data-latex="\sqrt{x-3}-\sqrt{x+3}" data-point="oo">lim √(x-3)-√(x+3)<br><small>x→∞</small></button>
+                    <button class="example-btn" data-latex="\frac{2x+3}{4x^{3}+2}" data-point="oo">lim (2x+3)/(4x³+2)<br><small>x→∞</small></button>
+                    <button class="example-btn" data-latex="\frac{\sin\left(2x\right)}{4x-\frac{4}{3}\sin\left(6x\right)}" data-point="0">lim sen(2x)/(4x-4/3 sen6x)<br><small>x→0</small></button>
+                    <button class="example-btn" data-latex="\left(1-8x\right)^{\frac{1}{4x}}" data-point="0">lim (1-8x)^(1/4x)<br><small>x→0</small></button>
+                    <button class="example-btn" data-latex="\frac{e^{x^{2}}-\cos\left(x\right)}{x^{2}}" data-point="0">lim (eˣ²-cos x)/x²<br><small>x→0</small></button>
                 </div>
             </div>
         </section>
@@ -129,12 +129,15 @@
         </footer>
     </div>
 
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathquill@0.10.1/build/mathquill.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
     <script>
-    function renderMath() {
+    function renderMath(el) {
+        if (!el) el = document.body;
         if (window.renderMathInElement) {
-            renderMathInElement(document.body, {
+            renderMathInElement(el, {
                 delimiters: [
                     {left: '$$', right: '$$', display: true},
                     {left: '\\(', right: '\\)', display: false}
@@ -145,80 +148,110 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        renderMath();
+        var MQ = MathQuill.getInterface(2);
+        var mqEditor = document.getElementById('mq-editor');
         var exprInput = document.getElementById('expression');
         var varInput = document.getElementById('variable');
         var pointInput = document.getElementById('point');
-        function insertIntoTarget(btn) {
-            var targetId = btn.getAttribute('data-target');
-            var targetInput = targetId === 'point' ? pointInput : exprInput;
-            var start = targetInput.selectionStart;
-            var end = targetInput.selectionEnd;
-            var val = targetInput.value;
-
-            if (btn.hasAttribute('data-wrap')) {
-                var wrap = btn.getAttribute('data-wrap');
-                var left = wrap[0];
-                var right = wrap[1];
-                var selected = val.substring(start, end);
-                targetInput.value = val.substring(0, start) + left + selected + right + val.substring(end);
-                var pos = selected ? start + left.length + selected.length + right.length : start + left.length;
-                targetInput.setSelectionRange(pos, pos);
-            } else {
-                var insert = btn.getAttribute('data-insert');
-                var cursorOffset = btn.hasAttribute('data-cursor') ? parseInt(btn.getAttribute('data-cursor')) : 0;
-                targetInput.value = val.substring(0, start) + insert + val.substring(end);
-                var pos = cursorOffset < 0 ? start + insert.length + cursorOffset : start + insert.length;
-                if (cursorOffset < 0) {
-                    pos = start + insert.length + cursorOffset;
-                    if (pos < start) pos = start;
-                }
-                targetInput.setSelectionRange(pos, pos);
-            }
-
-            targetInput.focus();
-            updatePreview();
-        }
         var preview = document.getElementById('preview');
         var timer;
 
-        // --- INSERTAR CARACTERES ---
-        document.querySelectorAll('.char-btn, .point-btn').forEach(function(btn) {
+        var mq = MQ.MathField(mqEditor, {
+            spaceBehavesLikeTab: true,
+            handlers: {
+                edit: function() {
+                    updatePreview();
+                }
+            }
+        });
+
+        var exprLatex = {{ expr_latex|tojson }};
+        if (exprLatex) {
+            mq.latex(exprLatex);
+        } else if (exprInput.value) {
+            mq.latex(exprInput.value);
+        }
+
+        function getLatex() {
+            return mq.latex();
+        }
+
+        function insertIntoTarget(btn) {
+            var cmd = btn.getAttribute('data-mq-cmd');
+            var write = btn.getAttribute('data-mq-write');
+            var text = btn.getAttribute('data-mq-text');
+
+            if (cmd) {
+                mq.cmd(cmd);
+            } else if (write) {
+                mq.write(write);
+            } else if (text) {
+                mq.typedText(text);
+            }
+            mq.focus();
+            updatePreview();
+        }
+
+        document.querySelectorAll('.char-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 insertIntoTarget(this);
             });
         });
 
-        // --- PREVIEW ---
+        document.getElementById('cube-root-btn').addEventListener('click', function() {
+            if (!mq.latex()) {
+                mq.latex('\\sqrt[3]{}');
+            }
+            mq.focus();
+            updatePreview();
+        });
+
         function updatePreview() {
-            var expr = exprInput.value.trim();
+            var latex = getLatex();
             var v = varInput.value.trim() || 'x';
             var p = pointInput.value.trim() || '0';
 
-            if (!expr) { preview.innerHTML = ''; return; }
+            if (!latex) { preview.innerHTML = ''; return; }
+
+            if (/\\left\(\\right\)/.test(latex) || /\{\}/.test(latex) || /\\sqrt\{\[/.test(latex)) {
+                return;
+            }
 
             var fd = new FormData();
-            fd.append('expression', expr);
+            fd.append('expression', latex);
             fd.append('variable', v);
             fd.append('point', p);
 
             fetch('/preview_limit', { method: 'POST', body: fd })
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    if (data.limit_tex) {
-                        preview.innerHTML = '$$ ' + data.limit_tex + ' $$';
-                        renderMath();
+                    if (data.error) {
+                        preview.innerHTML = '<span class="preview-error">Error: ' + data.error + '</span>';
+                        console.error('Preview error:', data.error);
+                    } else if (data.limit_tex) {
+                        try {
+                            var html = katex.renderToString(data.limit_tex, { displayMode: true, throwOnError: false });
+                            preview.innerHTML = html;
+                        } catch(e) {
+                            preview.innerHTML = '<span class="preview-error">Error al renderizar: ' + e.message + '</span>';
+                            console.error('KaTeX error:', e);
+                        }
                     } else {
                         preview.innerHTML = '';
                     }
                 })
-                .catch(function() { preview.innerHTML = ''; });
+                .catch(function(err) {
+                    preview.innerHTML = '<span class="preview-error">Error de conexión</span>';
+                    console.error('Fetch error:', err);
+                });
         }
 
-        exprInput.addEventListener('input', function() {
+        document.getElementById('point-inf-btn').addEventListener('click', function() {
+            pointInput.value = 'oo';
             clearTimeout(timer);
             timer = setTimeout(updatePreview, 300);
         });
+
         varInput.addEventListener('input', function() {
             clearTimeout(timer);
             timer = setTimeout(updatePreview, 300);
@@ -228,22 +261,29 @@
             timer = setTimeout(updatePreview, 300);
         });
 
-        // --- RESTAURAR PREVIEW AL RECARGAR ---
-        if (exprInput.value.trim()) {
-            updatePreview();
+        document.getElementById('limit-form').addEventListener('submit', function() {
+            exprInput.value = getLatex();
+        });
+
+        if (exprLatex || exprInput.value) {
+            setTimeout(updatePreview, 100);
         }
 
-        // --- EJEMPLOS ---
         document.querySelectorAll('.example-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
-                exprInput.value = this.getAttribute('data-expr');
+                var latex = this.getAttribute('data-latex');
+                if (latex) {
+                    mq.latex(latex);
+                }
                 if (this.hasAttribute('data-point')) {
                     pointInput.value = this.getAttribute('data-point');
                 }
-                updatePreview();
-                exprInput.focus();
+                setTimeout(updatePreview, 50);
+                mq.focus();
             });
         });
+
+        renderMath();
     });
     </script>
 </body>
