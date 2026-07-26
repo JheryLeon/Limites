@@ -13,12 +13,12 @@ from sympy import (
 
 def _normalize_expression(expr_str):
     expr = expr_str.strip().replace(' ', '')
-    expr = expr.replace('âˆš', 'sqrt').replace('V(', 'sqrt(').replace('v(', 'sqrt(')
-    expr = expr.replace('Ï€', 'pi').replace('âˆž', 'oo')
-    expr = expr.replace('Ã—', '*').replace('Â·', '*')
-    expr = expr.replace('Â²', '^2').replace('Â³', '^3').replace('â´', '^4')
-    expr = expr.replace('âº', '+').replace('â»', '-')
-    expr = expr.replace('âˆ’', '-')
+    expr = expr.replace('√', 'sqrt').replace('V(', 'sqrt(').replace('v(', 'sqrt(')
+    expr = expr.replace('π', 'pi').replace('∞', 'oo')
+    expr = expr.replace('×', '*').replace('·', '*')
+    expr = expr.replace('²', '^2').replace('³', '^3').replace('⁴', '^4')
+    expr = expr.replace('⁺', '+').replace('⁻', '-')
+    expr = expr.replace('−', '-')
     expr = expr.replace('[', '(').replace(']', ')')
     expr = expr.replace('{', '(').replace('}', ')')
     expr = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', expr)
@@ -138,12 +138,12 @@ def expr_to_latex(expr):
 class LimitSolver:
     FORM_NAMES = {
         '0/0': '0/0',
-        'âˆž/âˆž': '\\infty/\\infty',
-        '0Â·âˆž': '0 \\cdot \\infty',
-        'âˆž-âˆž': '\\infty - \\infty',
+        '∞/∞': '\\infty/\\infty',
+        '0·∞': '0 \\cdot \\infty',
+        '∞-∞': '\\infty - \\infty',
         '0^0': '0^{0}',
-        'âˆž^0': '\\infty^{0}',
-        '1^âˆž': '1^{\\infty}',
+        '∞^0': '\\infty^{0}',
+        '1^∞': '1^{\\infty}',
     }
 
     def __init__(self, expr_str, var_str='x', point_str='0', direction=None):
@@ -228,14 +228,14 @@ class LimitSolver:
             expr = sympify(s, locals=local_dict, evaluate=False)
             return expr
         except Exception as e:
-            raise ValueError(f"Error al parsear la expresiÃ³n: {e}")
+            raise ValueError(f"Error al parsear la expresión: {e}")
 
     def _parse_point(self, s):
         s = s.strip().lower().replace(' ', '')
         mapping = {
-            'oo': oo, 'inf': oo, 'âˆž': oo, 'infinito': oo, '+oo': oo, '+inf': oo, '+âˆž': oo,
-            '-oo': -oo, '-inf': -oo, '-âˆž': -oo, '-infinito': -oo,
-            'pi': pi, 'Ï€': pi,
+            'oo': oo, 'inf': oo, '∞': oo, 'infinito': oo, '+oo': oo, '+inf': oo, '+∞': oo,
+            '-oo': -oo, '-inf': -oo, '-∞': -oo, '-infinito': -oo,
+            'pi': pi, 'π': pi,
             'e': E,
         }
         if s in mapping:
@@ -320,8 +320,8 @@ class LimitSolver:
         limit_tex = self._limit_tex(expr)
         sub_tex = self._substitution_tex(expr)
         if sub_tex:
-            return f'{limit_tex} = {sub_tex} \\text{{ es una indeterminaciÃ³n }} \\boxed{{{form_tex}}}'
-        return f'{limit_tex} \\text{{ es una indeterminaciÃ³n }} \\boxed{{{form_tex}}}'
+            return f'{limit_tex} = {sub_tex} \\text{{ es una indeterminación }} \\boxed{{{form_tex}}}'
+        return f'{limit_tex} \\text{{ es una indeterminación }} \\boxed{{{form_tex}}}'
 
     def _add_step(self, title, tex='', description='', step_type='info'):
         self.steps.append({
@@ -488,11 +488,11 @@ class LimitSolver:
                     has_e = True
 
         if has_e:
-            return 'logarÃ­tmico'
+            return 'logarítmico'
         if has_log:
-            return 'logarÃ­tmico'
+            return 'logarítmico'
         if has_trig:
-            return 'trigonomÃ©trico'
+            return 'trigonométrico'
         if has_exp:
             return 'exponencial'
         if has_radical:
@@ -555,7 +555,7 @@ class LimitSolver:
                 has_minus = '-' in signs
                 has_q = '?' in signs
                 if (has_plus and has_minus) or (has_q and (has_plus or has_minus)) or (signs.count('?') >= 2):
-                    return 'âˆž-âˆž'
+                    return '∞-∞'
             return None
 
         num, den = expr.as_numer_denom()
@@ -569,7 +569,7 @@ class LimitSolver:
         if num_zero and den_zero:
             return '0/0'
         if num_inf and den_inf:
-            return 'âˆž/âˆž'
+            return '∞/∞'
 
         if expr.func == Pow:
             base, exp = expr.args
@@ -578,15 +578,15 @@ class LimitSolver:
             if self._is_zero(base_val) and self._is_zero(exp_val):
                 return '0^0'
             if self._is_inf(base_val) and self._is_zero(exp_val):
-                return 'âˆž^0'
+                return '∞^0'
             if base_val == 1 and self._is_inf(exp_val):
-                return '1^âˆž'
+                return '1^∞'
 
         if expr.func == Mul:
             args_zero = any(self._is_zero(self._safe_sub(a)) for a in expr.args)
             args_inf = any(self._is_inf(self._safe_sub(a)) for a in expr.args)
             if args_zero and args_inf:
-                return '0Â·âˆž'
+                return '0·∞'
 
         if self._is_indeterminate(num_val) or self._is_indeterminate(den_val):
             return None
@@ -597,7 +597,7 @@ class LimitSolver:
             self._limit_type = self._classify_expr(self.expr)
             form = self._detect_form()
 
-            # 0^0, âˆž^0, 1^âˆž are indeterminate but SymPy may evaluate them directly
+            # 0^0, ∞^0, 1^∞ are indeterminate but SymPy may evaluate them directly
             force_indeterminate = False
             if self.expr.func == Pow:
                 b, e = self.expr.args
@@ -617,7 +617,7 @@ class LimitSolver:
 
             if not self._is_indeterminate(direct_val):
                 self._add_step(
-                    'SustituciÃ³n directa',
+                    'Sustitución directa',
                     f'{self._limit_tex(self.expr)} = {self._latex(direct_val)}',
                     f'Al sustituir {self.var.name} = {self._point_tex()} obtenemos el resultado directamente.',
                     'success'
@@ -631,12 +631,12 @@ class LimitSolver:
                 }
 
             result = None
-            if form in ('0/0', 'âˆž/âˆž', 'âˆž-âˆž', '1^âˆž', '0^0', 'âˆž^0'):
+            if form in ('0/0', '∞/∞', '∞-∞', '1^∞', '0^0', '∞^0'):
                 if form == '0/0':
                     result = self._solve_0_over_0_detailed()
-                elif form == 'âˆž/âˆž':
+                elif form == '∞/∞':
                     result = self._solve_inf_over_inf_detailed()
-                elif form == 'âˆž-âˆž':
+                elif form == '∞-∞':
                     result = self._solve_inf_minus_inf_detailed()
                 else:
                     result = self._solve_exponential_detailed(form)
@@ -651,35 +651,35 @@ class LimitSolver:
                 return self._solve_fallback()
             else:
                 self._add_step(
-                    'ExpresiÃ³n original',
+                    'Expresión original',
                     f'{self._limit_tex(self.expr)}',
-                    f'Vamos a calcular el lÃ­mite indicado.',
+                    f'Vamos a calcular el límite indicado.',
                     'expression'
                 )
                 form_tex = self.FORM_NAMES.get(form, form or 'desconocida')
                 if form:
                     self._add_step(
-                        'IndeterminaciÃ³n detectada',
-                        f'{self._limit_tex(self.expr)} \\text{{ es una indeterminaciÃ³n }} \\boxed{{{form_tex}}}',
-                        f'Al sustituir directamente obtenemos {form}. Aplicaremos tÃ©cnicas para resolverla.',
+                        'Indeterminación detectada',
+                        f'{self._limit_tex(self.expr)} \\text{{ es una indeterminación }} \\boxed{{{form_tex}}}',
+                        f'Al sustituir directamente obtenemos {form}. Aplicaremos técnicas para resolverla.',
                         'warning'
                     )
                 else:
                     self._add_step(
                         'Forma indeterminada',
-                        f'\\text{{La expresiÃ³n presenta una indeterminaciÃ³n}}',
-                        'La expresiÃ³n es indeterminada. Usaremos tÃ©cnicas generales.',
+                        f'\\text{{La expresión presenta una indeterminación}}',
+                        'La expresión es indeterminada. Usaremos técnicas generales.',
                         'warning'
                     )
                 if form == '0/0':
                     result = self._solve_0_over_0()
-                elif form == 'âˆž/âˆž':
+                elif form == '∞/∞':
                     result = self._solve_inf_over_inf()
-                elif form == '0Â·âˆž':
+                elif form == '0·∞':
                     result = self._solve_0_times_inf()
-                elif form == 'âˆž-âˆž':
+                elif form == '∞-∞':
                     result = self._solve_inf_minus_inf()
-                elif form in ('1^âˆž', '0^0', 'âˆž^0'):
+                elif form in ('1^∞', '0^0', '∞^0'):
                     result = self._solve_exponential(form)
                 else:
                     result = self._solve_fallback()
@@ -688,7 +688,7 @@ class LimitSolver:
                     self._add_step(
                         'Resultado final',
                         f'\\boxed{{{self._limit_tex(self.expr)} = {self._latex(result)}}}',
-                        f'El lÃ­mite es {self._latex(result)}.',
+                        f'El límite es {self._latex(result)}.',
                         'success'
                     )
                     return {
@@ -719,9 +719,9 @@ class LimitSolver:
             else:
                 result = limit(expr, self.var, self.point)
             self._add_step(
-                'CÃ¡lculo simbÃ³lico (SymPy)',
+                'Cálculo simbólico (SymPy)',
                 f'{self._latex(expr)} \\to {self._latex(result)}',
-                'Utilizamos el motor de cÃ¡lculo simbÃ³lico para obtener el resultado.',
+                'Utilizamos el motor de cálculo simbólico para obtener el resultado.',
                 'success'
             )
             return result
@@ -729,7 +729,7 @@ class LimitSolver:
             self._add_step(
                 'Error',
                 '',
-                f'No se pudo calcular el lÃ­mite: {str(e)}',
+                f'No se pudo calcular el límite: {str(e)}',
                 'error'
             )
             return None
@@ -808,13 +808,13 @@ class LimitSolver:
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, '0/0'),
-            'Se sustituye la tendencia de x para hallar la indeterminaciÃ³n.',
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
             'warning'
         )
 
         num, den = expr.as_numer_denom()
 
-        # Try cos-specific solver first (handles 1-cos, cos-1 with x or xÂ²)
+        # Try cos-specific solver first (handles 1-cos, cos-1 with x or x²)
         result = self._solve_trig_with_cos(num, den, expr)
         if result is not None:
             return result
@@ -835,10 +835,10 @@ class LimitSolver:
             limit_tex = self._limit_tex(expr)
             self._add_step(
                 'Paso 2',
-                f'\\text{{Resolvemos aplicando lÃ­mites trigonomÃ©tricos:}} \\\\'
+                f'\\text{{Resolvemos aplicando límites trigonométricos:}} \\\\'
                 f'{limit_tex} = {self._latex(val)} \\\\'
                 f'\\boxed{{{limit_tex} = {self._latex(val)}}}',
-                'Se aplican lÃ­mites trigonomÃ©tricos fundamentales.',
+                'Se aplican límites trigonométricos fundamentales.',
                 'info'
             )
             return val
@@ -1022,10 +1022,10 @@ class LimitSolver:
             return None
 
         sl_tex = ',\\ '.join(special_limits_strs)
-        lines.append(f'\\text{{Se usan lÃ­mites trigonomÃ©tricos especiales:}} \\\\{sl_tex}')
+        lines.append(f'\\text{{Se usan límites trigonométricos especiales:}} \\\\{sl_tex}')
         lines.append(f'\\frac{{{num_tex}}}{{{den_tex}}}')
 
-        # Show transformation for xÂ²/(cos(kx)-1) type
+        # Show transformation for x²/(cos(kx)-1) type
         if num.is_Pow:
             base, exp = num.as_base_exp()
             if base == x and exp == 2 and den_cos:
@@ -1043,7 +1043,7 @@ class LimitSolver:
 
         paso2_tex = ' \\\\ '.join(lines)
         paso2_tex = paso2_tex + ' \\\\ ' + f'\\boxed{{{limit_tex} = {result_tex}}}'
-        self._add_step('Paso 2', paso2_tex, 'Se aplican lÃ­mites trigonomÃ©tricos especiales con coseno.', 'info')
+        self._add_step('Paso 2', paso2_tex, 'Se aplican límites trigonométricos especiales con coseno.', 'info')
         return result_val
 
     def _solve_trig_complex_generic(self, num, den, expr):
@@ -1161,7 +1161,7 @@ class LimitSolver:
                         )
                     if special_limits_strs:
                         sl_tex = ',\\ '.join(special_limits_strs)
-                        lines.append(f'\\text{{Aplicando lÃ­mites trigonomÃ©tricos: }} {sl_tex}')
+                        lines.append(f'\\text{{Aplicando límites trigonométricos: }} {sl_tex}')
                     lines.append(
                         f'{limit_tex} = \\frac{{{num_res_tex}}}{{{den_res_tex}}} \\\\'
                         f'= \\frac{{{self._latex(num_res_val)}}}{{{self._latex(den_res_val)}}} = {result_tex}'
@@ -1246,7 +1246,7 @@ class LimitSolver:
                 f'{{\\color{{green}}{special_limit_tex}}}'
                 f' = {result_tex}'
             )
-            desc = f'Se aplica el lÃ­mite trigonomÃ©trico especial {special_limit_tex}.'
+            desc = f'Se aplica el límite trigonométrico especial {special_limit_tex}.'
         elif pattern['trig_type'] == 'one_minus_cos':
             kc_frac = f'\\frac{{{k_tex}}}{{{display_c_tex}}}'
             lines.append(f'\\text{{Se multiplica y divide por }}{k_tex}:')
@@ -1428,12 +1428,12 @@ class LimitSolver:
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, '0/0'),
-            'Se sustituye la tendencia de x para hallar la indeterminaciÃ³n.',
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
             'warning'
         )
 
         # Extract numerator/denominator from raw expression avoiding
-        # as_numer_denom() which normalizes e^{-kx} â†’ 1/e^{kx}
+        # as_numer_denom() which normalizes e^{-kx} → 1/e^{kx}
         raw_add = None
         den_factors = []
         if isinstance(expr, sp.Mul):
@@ -1568,7 +1568,7 @@ class LimitSolver:
                 self.steps[-1]['tex'] = paso2_tex
                 return sympy_limit
 
-        # Multi e-term pattern (e^{ax} Â± e^{bx} ...) without -1
+        # Multi e-term pattern (e^{ax} ± e^{bx} ...) without -1
         e_terms = self._extract_e_terms(raw_add if raw_add is not None else num)
         if e_terms and len(e_terms) >= 2:
             limit_tex = self._limit_tex(expr)
@@ -1672,7 +1672,7 @@ class LimitSolver:
             self._add_step(
                 'Paso 2',
                 paso2_tex,
-                'Se suma y se resta uno para aplicar el lÃ­mite fundamental.',
+                'Se suma y se resta uno para aplicar el límite fundamental.',
                 'info'
             )
 
@@ -1772,7 +1772,7 @@ class LimitSolver:
             total += coeff * c
 
         for B in cos_data:
-            # B*cos(x) â†’ B*(cos(x)-1) contribution = -B*(1-cos(x))
+            # B*cos(x) → B*(cos(x)-1) contribution = -B*(1-cos(x))
             cos_1_den = sp.simplify((1 - sp.cos(x)) / den)
             c1 = sp.limit(cos_1_den, x, point)
             if c1 == 0 or c1 is None:
@@ -1804,7 +1804,7 @@ class LimitSolver:
             self._add_step(
                 'Paso 2',
                 paso2_tex,
-                'Se descompone la expresiÃ³n en lÃ­mites fundamentales.',
+                'Se descompone la expresión en límites fundamentales.',
                 'info'
             )
             return res
@@ -1819,7 +1819,7 @@ class LimitSolver:
             self._add_step(
                 'Paso 2',
                 paso2_tex,
-                'Se halla el lÃ­mite.',
+                'Se halla el límite.',
                 'info'
             )
             return sympy_limit
@@ -1833,16 +1833,16 @@ class LimitSolver:
         x, point = self.var, self.point
 
         # Route to specific solvers based on limit type
-        if self._limit_type == 'trigonomÃ©trico':
+        if self._limit_type == 'trigonométrico':
             return self._solve_trigonometric_0_over_0(expr)
-        if self._limit_type == 'logarÃ­tmico':
+        if self._limit_type == 'logarítmico':
             return self._solve_logarithmic_0_over_0(expr)
 
         # Default: rational / irrational path
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, '0/0'),
-            'Se sustituye la tendencia de x para hallar la indeterminaciÃ³n.',
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
             'warning'
         )
 
@@ -1900,7 +1900,7 @@ class LimitSolver:
                 step3_tex = f"\\lim_{{{x.name} \\to {self._point_tex()}}} {simpl_tex} = {sub_tex} = {self._latex(val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}"
             else:
                 step3_tex = f"\\lim_{{{x.name} \\to {self._point_tex()}}} {simpl_tex} = {self._latex(val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}"
-            self._add_step('Paso 3', step3_tex, 'Se sustituye el valor de la tendencia de x para hallar el lÃ­mite.', 'info')
+            self._add_step('Paso 3', step3_tex, 'Se sustituye el valor de la tendencia de x para hallar el límite.', 'info')
             return val
 
         if result_type == 'rationalize' and rat_info is not None:
@@ -1915,14 +1915,14 @@ class LimitSolver:
                 step2_tex = f"{expr_tex} \\cdot \\frac{{{conj_tex}}}{{{conj_tex}}} \\cdot \\frac{{{conj2_tex}}}{{{conj2_tex}}} = {new_tex}"
             else:
                 step2_tex = f"{expr_tex} \\cdot \\frac{{{conj_tex}}}{{{conj_tex}}} = {new_tex}"
-            self._add_step('Paso 2', step2_tex, f'Se racionaliza el {what} para eliminar la indeterminaciÃ³n.', 'info')
+            self._add_step('Paso 2', step2_tex, f'Se racionaliza el {what} para eliminar la indeterminación.', 'info')
 
             sub_tex = self._substitution_tex(simplified)
             if sub_tex:
                 step3_tex = f"\\lim_{{{x.name} \\to {self._point_tex()}}} {new_tex} = {sub_tex} = {self._latex(val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}"
             else:
                 step3_tex = f"\\lim_{{{x.name} \\to {self._point_tex()}}} {new_tex} = {self._latex(val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}"
-            self._add_step('Paso 3', step3_tex, 'Se sustituye el valor de la tendencia de x para hallar el lÃ­mite.', 'info')
+            self._add_step('Paso 3', step3_tex, 'Se sustituye el valor de la tendencia de x para hallar el límite.', 'info')
             return val
 
         lh_result = self._try_lhopital(expr)
@@ -2044,13 +2044,13 @@ class LimitSolver:
         orig_frac = sp.latex(expr)
         simpl_tex = sp.latex(simplified)
         step2_tex = f"\\frac{{{sp.latex(num)}}}{{{sp.latex(den)}}} = \\frac{{{sp.latex(num)}}}{{({sp.latex(root_term)})({sp.latex(sum_term)})}} = {simpl_tex}"
-        self._add_step('Paso 2', step2_tex, f'Se factoriza el denominador usando diferencia de potencias {n}-Ã©simas.', 'info')
+        self._add_step('Paso 2', step2_tex, f'Se factoriza el denominador usando diferencia de potencias {n}-ésimas.', 'info')
         sub_tex = self._substitution_tex(simplified)
         if sub_tex:
             step3_tex = f"\\lim_{{{x.name} \\to {self._point_tex()}}} {simpl_tex} = {sub_tex} = {sp.latex(val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {sp.latex(val)}}}"
         else:
             step3_tex = f"\\lim_{{{x.name} \\to {self._point_tex()}}} {simpl_tex} = {sp.latex(val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {sp.latex(val)}}}"
-        self._add_step('Paso 3', step3_tex, 'Se sustituye el valor de la tendencia de x para hallar el lÃ­mite.', 'info')
+        self._add_step('Paso 3', step3_tex, 'Se sustituye el valor de la tendencia de x para hallar el límite.', 'info')
         return val
 
     def _try_factor(self, num, den):
@@ -2062,15 +2062,15 @@ class LimitSolver:
             factored = sp.simplify(num_f / den_f)
             which = 'numerador' if num_f != num else 'denominador' if den_f != den else 'ambos'
             self._add_step(
-                'FactorizaciÃ³n',
+                'Factorización',
                 f'\\frac{{{self._latex(num)}}}{{{self._latex(den)}}} = \\frac{{{self._latex(num_f)}}}{{{self._latex(den_f)}}}',
-                f'Se factoriza {which} para eliminar la indeterminaciÃ³n.',
+                f'Se factoriza {which} para eliminar la indeterminación.',
                 'info'
             )
             simplified = cancel(num_f / den_f)
             if simplified != factored:
                 self._add_step(
-                    'CancelaciÃ³n',
+                    'Cancelación',
                     f'\\frac{{{self._latex(num_f)}}}{{{self._latex(den_f)}}} = {self._latex(simplified)}',
                     'Cancelamos los factores comunes.',
                     'info'
@@ -2078,9 +2078,9 @@ class LimitSolver:
             val = self._safe_sub(simplified)
             if not self._is_indeterminate(val):
                 self._add_step(
-                    'EvaluaciÃ³n',
+                    'Evaluación',
                     f'\\lim_{{{x.name} \\to {self._point_tex()}}} {self._latex(simplified)} = {self._latex(val)}',
-                    f'Se sustituye el valor de la tendencia de {x.name} para hallar el lÃ­mite.',
+                    f'Se sustituye el valor de la tendencia de {x.name} para hallar el límite.',
                     'info'
                 )
                 return val
@@ -2110,24 +2110,24 @@ class LimitSolver:
             new_den = den * conj
         what = 'numerador' if is_num else 'denominador'
         self._add_step(
-            'RacionalizaciÃ³n',
+            'Racionalización',
             f'{self._latex(expr)} \\cdot \\frac{{{self._latex(conj)}}}{{{self._latex(conj)}}}',
-            f'Se racionaliza el {what} para eliminar la indeterminaciÃ³n.',
+            f'Se racionaliza el {what} para eliminar la indeterminación.',
             'info'
         )
         new_expr = sp.cancel(new_num / new_den)
         self._add_step(
-            'SimplificaciÃ³n',
+            'Simplificación',
             f'{self._latex(new_expr)}',
-            'Simplificamos la expresiÃ³n resultante.',
+            'Simplificamos la expresión resultante.',
             'info'
         )
         val = self._safe_sub(new_expr)
         if not self._is_indeterminate(val):
             self._add_step(
-                'EvaluaciÃ³n',
+                'Evaluación',
                 f'\\lim_{{{x.name} \\to {self._point_tex()}}} {self._latex(new_expr)} = {self._latex(val)}',
-                f'Se sustituye el valor de la tendencia de {x.name} para hallar el lÃ­mite.',
+                f'Se sustituye el valor de la tendencia de {x.name} para hallar el límite.',
                 'info'
             )
             return val
@@ -2152,9 +2152,9 @@ class LimitSolver:
                 return None
             new_expr = sp.simplify(n_d / d_d)
             labels = {1: 'primera', 2: 'segunda', 3: 'tercera', 4: 'cuarta', 5: 'quinta'}
-            lbl = labels.get(i + 1, f'{i+1}Âª')
+            lbl = labels.get(i + 1, f'{i+1}ª')
             self._add_step(
-                f'L\'HÃ´pital ({lbl} aplicaciÃ³n)',
+                f'L\'Hôpital ({lbl} aplicación)',
                 f'\\begin{{aligned}} f\'(x) &= {self._latex(n_d)} \\\\ g\'(x) &= {self._latex(d_d)} \\\\ \\frac{{f\'(x)}}{{g\'(x)}} &= {self._latex(new_expr)} \\end{{aligned}}',
                 'Derivamos numerador y denominador por separado.',
                 'info'
@@ -2166,8 +2166,8 @@ class LimitSolver:
             current = new_expr
         if applied:
             self._add_step(
-                'L\'HÃ´pital',
-                f'\\text{{Se alcanzÃ³ el mÃ¡ximo de iteraciones ({max_iter}).}}',
+                'L\'Hôpital',
+                f'\\text{{Se alcanzó el máximo de iteraciones ({max_iter}).}}',
                 '',
                 'warning'
             )
@@ -2183,7 +2183,7 @@ class LimitSolver:
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, '\\infty/\\infty'),
-            'Se sustituye la tendencia de x para hallar la indeterminaciÃ³n.',
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
             'warning'
         )
 
@@ -2208,7 +2208,7 @@ class LimitSolver:
             self._add_step(
                 'Paso 2',
                 f'\\frac{{{self._latex(num)}}}{{{self._latex(den)}}} = \\frac{{{self._latex(new_num)}}}{{{self._latex(new_den)}}}',
-                f'Se divide la expresiÃ³n entre {highest_tex}',
+                f'Se divide la expresión entre {highest_tex}',
                 'info'
             )
 
@@ -2217,7 +2217,7 @@ class LimitSolver:
                 self._add_step(
                     'Paso 3',
                     f'\\lim_{{{x.name} \\to {self._point_tex()}}} {self._latex(new_expr)} = {substituted_after_tex} = {self._latex(val)} \\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}',
-f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada para obtener el valor final.',
+f'Sustituimos {x.name} = {self._point_tex()} en la expresión simplificada para obtener el valor final.',
                     'info'
                 )
                 return val
@@ -2246,18 +2246,18 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
             val = self._safe_sub(new_num / new_den)
             new_expr = sp.simplify(new_num / new_den)
             self._add_step(
-                'DivisiÃ³n por mÃ¡xima potencia',
+                'División por máxima potencia',
                 f'\\frac{{{self._latex(num)}}}{{{self._latex(den)}}} = \\frac{{{self._latex(new_num)}}}{{{self._latex(new_den)}}}',
-                f'Se divide la expresiÃ³n entre {self._latex(xh)}',
+                f'Se divide la expresión entre {self._latex(xh)}',
                 'info'
             )
             if not self._is_indeterminate(val):
                 substituted_after = new_expr.subs(x, self.point)
                 substituted_after_tex = self._latex(substituted_after)
                 self._add_step(
-                    'EvaluaciÃ³n',
+                    'Evaluación',
                     f'\\lim_{{{x.name} \\to {self._point_tex()}}} {self._latex(new_expr)} = {substituted_after_tex} = {self._latex(val)}',
-                    f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada.',
+                    f'Sustituimos {x.name} = {self._point_tex()} en la expresión simplificada.',
                     'info'
                 )
                 return val
@@ -2282,14 +2282,14 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
             from sympy import diff
 
             def try_lhopital_on_factors(f_num, f_den, label):
-                """Apply L'HÃ´pital treating f_num/f_den as the quotient."""
+                """Apply L'Hôpital treating f_num/f_den as the quotient."""
                 n_d = diff(f_num, x)
                 d_d = diff(f_den, x)
                 if self._safe_sub(d_d) == 0 or d_d == 0:
                     return None
                 new_rat = sp.simplify(n_d / d_d)
                 self._add_step(
-                    f'L\'HÃ´pital ({label})',
+                    f'L\'Hôpital ({label})',
                     f'\\begin{{aligned}} f\'(x) &= {self._latex(n_d)} \\\\ g\'(x) &= {self._latex(d_d)} \\\\ \\frac{{f\'(x)}}{{g\'(x)}} &= {self._latex(new_rat)} \\end{{aligned}}',
                     'Derivamos numerador y denominador por separado.',
                     'info'
@@ -2306,7 +2306,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                         if self._safe_sub(d2_d) != 0 and d2_d != 0:
                             new_rat2 = sp.simplify(n2_d / d2_d)
                             self._add_step(
-                                'L\'HÃ´pital (segunda aplicaciÃ³n)',
+                                'L\'Hôpital (segunda aplicación)',
                                 f'\\begin{{aligned}} f\'(x) &= {self._latex(n2_d)} \\\\ g\'(x) &= {self._latex(d2_d)} \\\\ \\frac{{f\'(x)}}{{g\'(x)}} &= {self._latex(new_rat2)} \\end{{aligned}}',
                                 'Derivamos numerador y denominador nuevamente.',
                                 'info'
@@ -2316,28 +2316,28 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                                 return val2
                 return None
 
-            # Try 0/0 form: zero / (1/inf)  â†’ numerator: zero, denominator: 1/inf
+            # Try 0/0 form: zero / (1/inf)  → numerator: zero, denominator: 1/inf
             self._add_step(
-                'TransformaciÃ³n a 0/0',
+                'Transformación a 0/0',
                 f'{self._latex(expr)} = \\frac{{{self._latex(zero_factor)}}}{{\\frac{{1}}{{{self._latex(inf_factor)}}}}}',
-                'Reescribimos como cociente para aplicar L\'HÃ´pital.',
+                'Reescribimos como cociente para aplicar L\'Hôpital.',
                 'info'
             )
             f_den_1 = sp.Pow(inf_factor, -1)  # 1/inf_factor
-            # Don't simplify / together / fraction - apply L'HÃ´pital directly on the pair
+            # Don't simplify / together / fraction - apply L'Hôpital directly on the pair
             result = try_lhopital_on_factors(zero_factor, f_den_1, '0/0')
             if result is not None:
                 return result
 
-            # Try âˆž/âˆž form: inf / (1/zero) â†’ numerator: inf, denominator: 1/zero
+            # Try ∞/∞ form: inf / (1/zero) → numerator: inf, denominator: 1/zero
             self._add_step(
-                'TransformaciÃ³n a âˆž/âˆž',
+                'Transformación a ∞/∞',
                 f'{self._latex(expr)} = \\frac{{{self._latex(inf_factor)}}}{{\\frac{{1}}{{{self._latex(zero_factor)}}}}}',
-                'Reescribimos como cociente para aplicar L\'HÃ´pital.',
+                'Reescribimos como cociente para aplicar L\'Hôpital.',
                 'info'
             )
             f_den_2 = sp.Pow(zero_factor, -1)  # 1/zero_factor
-            result = try_lhopital_on_factors(inf_factor, f_den_2, 'âˆž/âˆž')
+            result = try_lhopital_on_factors(inf_factor, f_den_2, '∞/∞')
             if result is not None:
                 return result
 
@@ -2354,7 +2354,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, '\\infty - \\infty'),
-            'Se sustituye la tendencia de x para hallar la indeterminaciÃ³n.',
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
             'warning'
         )
 
@@ -2379,7 +2379,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                     self._add_step(
                         'Paso 3',
                         f'\\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}',
-                        'Se halla el lÃ­mite.',
+                        'Se halla el límite.',
                         'info'
                     )
                     return val
@@ -2390,7 +2390,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                         self._add_step(
                             'Paso 3',
                             f'\\lim_{{{x.name} \\to {self._point_tex()}}} {self._latex(new_expr)} = {self._latex(final_val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(final_val)}}}',
-                            'Se calcula el lÃ­mite de la expresiÃ³n resultante.',
+                            'Se calcula el límite de la expresión resultante.',
                             'info'
                         )
                         return final_val
@@ -2409,7 +2409,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                         self._add_step(
                             'Paso 2',
                             f'{paren_tex} \\cdot \\frac{{{conj_tex}}}{{{conj_tex}}} = {self._latex(new_expr)}',
-                            'Se racionaliza la expresiÃ³n.',
+                            'Se racionaliza la expresión.',
                             'info'
                         )
                         val = self._safe_sub(new_expr)
@@ -2417,7 +2417,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                             self._add_step(
                                 'Paso 3',
                                 f'\\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}',
-                                'Se halla el lÃ­mite.',
+                                'Se halla el límite.',
                                 'info'
                             )
                             return val
@@ -2428,7 +2428,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                                 self._add_step(
                                     'Paso 3',
                                     f'\\lim_{{{x.name} \\to {self._point_tex()}}} {self._latex(new_expr)} = {self._latex(final_val)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(final_val)}}}',
-                                    'Se calcula el lÃ­mite de la expresiÃ³n resultante.',
+                                    'Se calcula el límite de la expresión resultante.',
                                     'info'
                                 )
                                 return final_val
@@ -2448,7 +2448,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                     self._add_step(
                         'Paso 3',
                         f'\\boxed{{{self._limit_tex(expr)} = {self._latex(val)}}}',
-                        'Se sustituye el valor de la tendencia de x para hallar el lÃ­mite.',
+                        'Se sustituye el valor de la tendencia de x para hallar el límite.',
                         'info'
                     )
                     return val
@@ -2461,14 +2461,14 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                         self._add_step(
                             'Paso 3',
                             f'\\boxed{{{self._limit_tex(expr)} = {self._latex(sub_val)}}}',
-                            'Se sustituye el valor de la tendencia de x para hallar el lÃ­mite.',
+                            'Se sustituye el valor de la tendencia de x para hallar el límite.',
                             'info'
                         )
                         return sub_val
                     lh = self._try_lhopital(frac)
                     if lh is not None:
                         return lh
-                elif form == 'âˆž/âˆž':
+                elif form == '∞/∞':
                     num, den = fraction(frac)
                     try:
                         n_deg = degree(num, x) if num.has(x) else 0
@@ -2485,7 +2485,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                             self._add_step(
                                 'Paso 3',
                                 f'\\boxed{{{self._limit_tex(expr)} = {self._latex(sub_val)}}}',
-                                'Se sustituye el valor de la tendencia de x para hallar el lÃ­mite.',
+                                'Se sustituye el valor de la tendencia de x para hallar el límite.',
                                 'info'
                             )
                             return sub_val
@@ -2501,9 +2501,9 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         frac = together(expr)
         if frac != expr:
             self._add_step(
-                'CombinaciÃ³n de tÃ©rminos',
+                'Combinación de términos',
                 f'{self._latex(expr)} = {self._latex(frac)}',
-                'Combinamos los tÃ©rminos en una sola fracciÃ³n.',
+                'Combinamos los términos en una sola fracción.',
                 'info'
             )
             val = self._safe_sub(frac)
@@ -2513,7 +2513,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
             if form == '0/0':
                 n, d = fraction(frac)
                 return self._solve_0_over_0_sub(n, d)
-            if form == 'âˆž/âˆž':
+            if form == '∞/∞':
                 return self._solve_inf_over_inf(frac)
         n, d = fraction(together(expr))
         r = self._try_rationalize(n, d)
@@ -2540,7 +2540,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                         result = lh
                 except:
                     pass
-        elif form == 'âˆž/âˆž':
+        elif form == '∞/∞':
             num, den = fraction(together(expr))
             try:
                 n_deg = degree(num, x) if num.has(x) else 0
@@ -2582,7 +2582,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         self._add_step(
             'Paso 1',
             self._paso1_indet_tex(expr, form_tex),
-            'Se sustituye la tendencia de x para hallar la indeterminaciÃ³n.',
+            'Se sustituye la tendencia de x para hallar la indeterminación.',
             'warning'
         )
 
@@ -2594,8 +2594,8 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         g_tex = self._latex(exponent)
 
         # Paso 2 + Paso 3
-        if form == '1^âˆž':
-            # Use (f-1)Â·g formula
+        if form == '1^∞':
+            # Use (f-1)·g formula
             paso2_tex = (
                 f'\\text{{Aplicamos la igualdad: }} '
                 f'\\lim \\left({f_tex}\\right)^{{{g_tex}}} = e^{{\\lim ({f_tex}-1) \\cdot {g_tex}}}'
@@ -2603,7 +2603,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
             self._add_step(
                 'Paso 2',
                 paso2_tex,
-                'Se aplica la igualdad fundamental de lÃ­mites exponenciales.',
+                'Se aplica la igualdad fundamental de límites exponenciales.',
                 'info'
             )
 
@@ -2619,10 +2619,10 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                     f'\\lim \\left({f_tex}\\right)^{{{g_tex}}} = e^{{{new_power_tex}}} = {self._latex(result)} \\\\'
                     f'\\boxed{{{self._limit_tex(expr)} = {self._latex(result)}}}'
                 )
-                self._add_step('Paso 3', paso3_tex, 'Se halla el lÃ­mite.', 'info')
+                self._add_step('Paso 3', paso3_tex, 'Se halla el límite.', 'info')
                 return result
 
-        # For âˆž^0, 0^0, or when 1^âˆž formula fails: use gÂ·ln(f) approach
+        # For ∞^0, 0^0, or when 1^∞ formula fails: use g·ln(f) approach
         paso2_formula = self._latex(exponent) + ' \\cdot \\ln\\left(' + f_tex + '\\right)'
         paso2_tex = (
             f'\\text{{Aplicamos logaritmo natural: }} '
@@ -2647,14 +2647,14 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
                 f'\\lim \\left({f_tex}\\right)^{{{g_tex}}} = e^{{{self._latex(ln_val)}}} = {self._latex(result)} \\\\'
                 f'\\boxed{{{self._limit_tex(expr)} = {self._latex(result)}}}'
             )
-            self._add_step('Paso 3', paso3_tex, 'Se halla el lÃ­mite.', 'info')
+            self._add_step('Paso 3', paso3_tex, 'Se halla el límite.', 'info')
             return result
 
         # ln_expr is indeterminate, try to solve via delegation
         paso3_tex = (
             f'{g_tex} \\cdot \\ln\\left({f_tex}\\right) = {ln_tex}'
         )
-        self._add_step('Paso 3', paso3_tex, 'Se transforma el lÃ­mite al producto.', 'info')
+        self._add_step('Paso 3', paso3_tex, 'Se transforma el límite al producto.', 'info')
 
         result_ln = self._solve_silent(ln_expr)
         if result_ln is not None and not self._is_indeterminate(result_ln):
@@ -2662,7 +2662,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
             self._add_step(
                 'Resultado',
                 f'\\ln L = {self._latex(result_ln)} \\implies L = e^{{{self._latex(result_ln)}}} = {self._latex(L)} \\\\ \\boxed{{{self._limit_tex(expr)} = {self._latex(L)}}}',
-                'Se aplica exponencial para hallar el lÃ­mite.',
+                'Se aplica exponencial para hallar el límite.',
                 'info'
             )
             return L
@@ -2677,7 +2677,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         base, exponent = expr.args
         ln_expr = sp.simplify(exponent * log(base))
         self._add_step(
-            'TransformaciÃ³n logarÃ­tmica',
+            'Transformación logarítmica',
             f'\\text{{Sea }} L = {self._latex(expr)} \\\\ \\ln L = {self._latex(exponent)} \\cdot \\ln\\left({self._latex(base)}\\right) = {self._latex(ln_expr)}',
             'Aplicamos logaritmo natural para convertir la exponencial en un producto.',
             'info'
@@ -2686,7 +2686,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         if not self._is_indeterminate(ln_val):
             L = exp(ln_val)
             self._add_step(
-                'ExponenciaciÃ³n',
+                'Exponenciación',
                 f'\\ln L = {self._latex(ln_val)} \\implies L = e^{{{self._latex(ln_val)}}} = {self._latex(L)}',
                 'Aplicamos exponencial para despejar L.',
                 'info'
@@ -2697,9 +2697,9 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         if form_ln == '0/0':
             n, d = fraction(together(ln_expr))
             result_ln = self._solve_0_over_0_sub(n, d)
-        elif form_ln == 'âˆž/âˆž':
+        elif form_ln == '∞/∞':
             result_ln = self._solve_inf_over_inf(ln_expr)
-        elif form_ln == '0Â·âˆž':
+        elif form_ln == '0·∞':
             result_ln = self._solve_0_times_inf(ln_expr)
         else:
             lh = self._try_lhopital(ln_expr)
@@ -2708,7 +2708,7 @@ f'Sustituimos {x.name} = {self._point_tex()} en la expresiÃ³n simplificada par
         if result_ln is not None and not self._is_indeterminate(result_ln):
             L = exp(result_ln)
             self._add_step(
-                'ExponenciaciÃ³n',
+                'Exponenciación',
                 f'\\ln L = {self._latex(result_ln)} \\implies L = e^{{{self._latex(result_ln)}}} = {self._latex(L)}',
                 'Aplicamos exponencial para despejar L.',
                 'info'

@@ -34,22 +34,22 @@ def _get_local_dict(var_str):
 def _point_to_tex(pt):
     pt = pt.strip().replace(' ', '')
     mapping = {
-        'oo': '\\infty', 'inf': '\\infty', 'âˆž': '\\infty',
-        '-oo': '-\\infty', '-inf': '-\\infty', '-âˆž': '-\\infty',
-        '+oo': '\\infty', '+inf': '\\infty', '+âˆž': '\\infty',
-        'pi': '\\pi', 'Ï€': '\\pi',
+        'oo': '\\infty', 'inf': '\\infty', '∞': '\\infty',
+        '-oo': '-\\infty', '-inf': '-\\infty', '-∞': '-\\infty',
+        '+oo': '\\infty', '+inf': '\\infty', '+∞': '\\infty',
+        'pi': '\\pi', 'π': '\\pi',
     }
     return mapping.get(pt, pt)
 
 
 def _normalize_expression(expr_str):
     expr = expr_str.strip().replace(' ', '')
-    expr = expr.replace('âˆš', 'sqrt').replace('V(', 'sqrt(').replace('v(', 'sqrt(')
-    expr = expr.replace('Ï€', 'pi').replace('âˆž', 'oo')
-    expr = expr.replace('Ã—', '*').replace('Â·', '*')
-    expr = expr.replace('Â²', '^2').replace('Â³', '^3').replace('â´', '^4')
-    expr = expr.replace('âº', '+').replace('â»', '-')
-    expr = expr.replace('âˆ’', '-')
+    expr = expr.replace('√', 'sqrt').replace('V(', 'sqrt(').replace('v(', 'sqrt(')
+    expr = expr.replace('π', 'pi').replace('∞', 'oo')
+    expr = expr.replace('×', '*').replace('·', '*')
+    expr = expr.replace('²', '^2').replace('³', '^3').replace('⁴', '^4')
+    expr = expr.replace('⁺', '+').replace('⁻', '-')
+    expr = expr.replace('−', '-')
     expr = expr.replace('[', '(').replace(']', ')')
     expr = re.sub(r'(\d)([a-zA-Z])', r'\1*\2', expr)
     expr = re.sub(r'\\sqrt\{([^{}]+)\}', r'sqrt(\1)', expr)
@@ -74,7 +74,7 @@ def index():
                 'steps': [],
                 'result_tex': None,
                 'form': None,
-                'error': 'Por favor, ingresa una expresiÃ³n.',
+                'error': 'Por favor, ingresa una expresión.',
             }
         else:
             try:
@@ -113,7 +113,7 @@ def preview_limit():
     point_str = request.form.get('point', '0').strip() or '0'
 
     if not expr_str:
-        return jsonify({'limit_tex': None, 'error': 'ExpresiÃ³n vacÃ­a'})
+        return jsonify({'limit_tex': None, 'error': 'Expresión vacía'})
 
     try:
         if '\\' in expr_str:
