@@ -137,7 +137,28 @@ def preview_limit():
 
 if __name__ == '__main__':
     import os
+    import socket
     port = int(os.environ.get('PORT', 5000))
+
+    # Get local network IP for phone access
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(('8.8.8.8', 80))
+        local_ip = s.getsockname()[0]
+        s.close()
+    except:
+        local_ip = '127.0.0.1'
+
+    print(f'\n{"="*50}')
+    print(f'  Servidor iniciado')
+    print(f'  Local:    http://127.0.0.1:{port}')
+    print(f'  Red:      http://{local_ip}:{port}')
+    print(f'  Celular:  Conecta el celular a la misma red WiFi')
+    print(f'            y abre http://{local_ip}:{port}')
+    print(f'  Firewall: Si no conecta, abre el puerto {port}:')
+    print(f'            netsh advfirewall firewall add rule name="Limites {port}" dir=in action=allow protocol=TCP localport={port}')
+    print(f'{"="*50}\n')
+
     app.run(host='0.0.0.0', port=port, debug=True)
 
 

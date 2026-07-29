@@ -25,6 +25,8 @@
                 <div class="form-group">
                     <label>Expresión</label>
                     <div id="mq-editor" class="mq-editor"></div>
+                    <textarea id="latex-textarea" class="latex-textarea" style="display:none" placeholder="Escribe una expresi\u00f3n, por ejemplo: (x^3+1)/(x^2-1)" rows="3" inputmode="text" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false"></textarea>
+                    <div id="latex-text-preview" class="preview-box" style="display:none"></div>
                     <input type="hidden" id="expression" name="expression" value="{{ expr }}">
                     <div class="preview-hint">Vista Previa del Ejercicio</div>
                     <div id="preview" class="preview-box"></div>
@@ -38,7 +40,11 @@
                     <button type="button" class="char-btn" data-mq-write="\sin" title="Seno">sen</button>
                     <button type="button" class="char-btn" data-mq-write="\cos" title="Coseno">cos</button>
                     <button type="button" class="char-btn" data-mq-write="\tan" title="Tangente">tan</button>
+                    <button type="button" class="char-btn" data-mq-write="\sec" title="Secante">sec</button>
+                    <button type="button" class="char-btn" data-mq-write="\csc" title="Cosecante">csc</button>
+                    <button type="button" class="char-btn" data-mq-write="\cot" title="Cotangente">cot</button>
                     <button type="button" class="char-btn" data-mq-write="\ln" title="Logaritmo natural">ln</button>
+                    <button type="button" class="char-btn" data-mq-write="\log" title="Logaritmo base 10">log</button>
                     <button type="button" class="char-btn" data-mq-text="()" title="Paréntesis">( )</button>
                     <button type="button" class="char-btn" data-mq-write="\pi" title="Pi">π</button>
                     <button type="button" class="char-btn" data-mq-write="\infty" title="Infinito">∞</button>
@@ -173,13 +179,30 @@
         }
 
         function getLatex() {
-            return mq.latex();
+            return isTextMode ? latexTextarea.value : mq.latex();
         }
 
         function insertIntoTarget(btn) {
             var cmd = btn.getAttribute('data-mq-cmd');
             var write = btn.getAttribute('data-mq-write');
             var text = btn.getAttribute('data-mq-text');
+
+            if (isTextMode) {
+                var insertion = text || write || cmd || '';
+                var cursorOffset;
+                if (cmd === '\\frac') {
+                    insertion = '\\frac{}{}';
+                    cursorOffset = 6;
+                }
+                if (cmd === '\\sqrt') {
+                    insertion = '\\sqrt{}';
+                    cursorOffset = 6;
+                }
+                insertTextAtCursor(latexTextarea, insertion, cursorOffset);
+                latexTextarea.focus();
+                latexTextarea.dispatchEvent(new Event('input'));
+                return;
+            }
 
             if (cmd) {
                 mq.cmd(cmd);
@@ -192,6 +215,13 @@
             updatePreview();
         }
 
+        function insertTextAtCursor(field, text, cursorOffset) {
+            var start = field.selectionStart;
+            var end = field.selectionEnd;
+            field.value = field.value.slice(0, start) + text + field.value.slice(end);
+            field.selectionStart = field.selectionEnd = start + (cursorOffset === undefined ? text.length : cursorOffset);
+        }
+
         document.querySelectorAll('.char-btn').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 insertIntoTarget(this);
@@ -199,6 +229,12 @@
         });
 
         document.getElementById('cube-root-btn').addEventListener('click', function() {
+            if (isTextMode) {
+                insertTextAtCursor(latexTextarea, '\\sqrt[3]{}', 9);
+                latexTextarea.focus();
+                latexTextarea.dispatchEvent(new Event('input'));
+                return;
+            }
             if (!mq.latex()) {
                 mq.latex('\\sqrt[3]{}');
             }
@@ -265,6 +301,49 @@
             exprInput.value = getLatex();
         });
 
+        // En pantallas t\u00e1ctiles usamos un textarea nativo: as\u00ed el teclado del
+        // celular se abre al tocar el campo, sin depender de MathQuill.
+        var latexTextarea = document.getElementById('latex-textarea');
+        var latexTextPreview = document.getElementById('latex-text-preview');
+        var isTextMode = window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+
+        if (isTextMode) {
+            latexTextarea.value = mq.latex() || exprInput.value || '';
+            mqEditor.style.display = 'none';
+            latexTextarea.style.display = 'block';
+            latexTextPreview.style.display = 'flex';
+            updateTextPreview();
+        }
+
+        function updateTextPreview() {
+            var latex = latexTextarea.value.trim();
+            if (!latex) {
+                latexTextPreview.innerHTML = '<span style="color:#94a3b8">La expresi\u00f3n se renderizar\u00e1 aqu\u00ed...</span>';
+                return;
+            }
+            try {
+                var html = katex.renderToString(latex, { displayMode: true, throwOnError: false });
+                latexTextPreview.innerHTML = html;
+            } catch(e) {
+                latexTextPreview.innerHTML = '<span class="preview-error">Error: ' + e.message + '</span>';
+            }
+        }
+
+        latexTextarea.addEventListener('input', function() {
+            updateTextPreview();
+            exprInput.value = this.value;
+            clearTimeout(timer);
+            timer = setTimeout(updatePreview, 300);
+        });
+
+        document.getElementById('limit-form').addEventListener('submit', function() {
+            if (isTextMode) {
+                exprInput.value = latexTextarea.value;
+            } else {
+                exprInput.value = getLatex();
+            }
+        });
+
         if (exprLatex || exprInput.value) {
             setTimeout(updatePreview, 100);
         }
@@ -273,13 +352,22 @@
             btn.addEventListener('click', function() {
                 var latex = this.getAttribute('data-latex');
                 if (latex) {
-                    mq.latex(latex);
+                    if (isTextMode) {
+                        latexTextarea.value = latex;
+                        latexTextarea.dispatchEvent(new Event('input'));
+                    } else {
+                        mq.latex(latex);
+                    }
                 }
                 if (this.hasAttribute('data-point')) {
                     pointInput.value = this.getAttribute('data-point');
                 }
                 setTimeout(updatePreview, 50);
-                mq.focus();
+                if (isTextMode) {
+                    latexTextarea.focus();
+                } else {
+                    mq.focus();
+                }
             });
         });
 

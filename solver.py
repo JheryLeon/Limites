@@ -615,7 +615,7 @@ class LimitSolver:
             else:
                 direct_val = self._safe_sub(self.expr)
 
-            if not self._is_indeterminate(direct_val):
+            if not self._is_indeterminate(direct_val) and not form:
                 self._add_step(
                     'Sustitución directa',
                     f'{self._limit_tex(self.expr)} = {self._latex(direct_val)}',
